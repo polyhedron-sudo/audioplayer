@@ -1,0 +1,43 @@
+SOUNDTRACK PLAYER — GITHUB PAGES
+
+1. Put index.html and your audio files together in the repository root.
+   If your existing website already has an index.html, use a separate soundtrack
+   repository rather than overwriting your existing home page.
+   Enable GitHub Pages for that root. Open the published page, not the GitHub file.
+
+2. On the usual username.github.io/repository/ address the player automatically
+   lists root audio files using GitHub's public API. Audio streams from Pages.
+   Prefix filenames with 01, 02, etc. for ordering. MP3 is a good starting format.
+   Format support depends on the listener's browser.
+
+3. Optional: edit CONFIG near the beginning of the script in index.html.
+   Fill tracks for custom titles, artist names, notes, and order. Example:
+   tracks: [
+     {file:'01-first-song.mp3',title:'First Song',artist:'Your name',info:'Opening theme'},
+     {file:'02-second-song.mp3',title:'Second Song',artist:'Your name'}
+   ]
+   Manual tracks bypass GitHub API availability/rate limits. Filenames must
+   match exactly, including capitals and extensions. Rename a file and its
+   comment identity changes. Changing only the display title preserves comments.
+   For a custom domain, set owner and repo. Set branch when the audio lives on
+   a publishing branch other than your repository default. Root publishing is
+   assumed; a /docs publishing source requires manual track configuration.
+
+BEHAVIOR AND LIMITS
+
+Play/pause, next, previous, seek, volume, shuffle, repeat-all, and repeat-one.
+Tap Repeat to cycle off → playlist → one track → off.
+Shuffle goes through every track once before a repeat-all cycle starts again.
+Browsers require the visitor to press Play; there is no autoplay on arrival.
+iPhone volume may need the device's physical volume controls.
+No download links or save controls are provided. Public audio remains accessible.
+
+VERIFICATION
+
+JavaScript logic checks use mocked DOM, audio and repository responses.
+A real-browser run was unavailable in the build environment. Your real songs still need testing after publication.
+
+References:
+https://docs.github.com/en/rest/repos/contents
+https://supabase.com/docs/guides/getting-started/api-keys
+https://supabase.com/docs/guides/database/postgres/row-level-security
