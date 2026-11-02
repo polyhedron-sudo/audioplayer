@@ -48,8 +48,8 @@ function rangeFetch(data,ignore=false,cancelled=[]){return async(url,options={})
 test('filename URLs preserve spaces, apostrophes and # characters',()=>{
  const f=fixture();assert.equal(f.run("songURL(\"The '90s #1.mp3\")"),'https://test.github.io/music/used-songs/The%20%2790s%20%231.mp3'.replace('%27',"'"));
 });
-test('Next selects, stops playback and updates the Play label synchronously',async()=>{
- const f=fixture();f.seed();await f.run('play()');f.el('next').onclick();assert.equal(f.run('current'),1);assert.equal(f.audio.paused,true);assert.equal(f.el('play').attributes['aria-label'],'Play');await f.flush();
+test('Next selects and starts playback with the Pause label synchronously',async()=>{
+ const f=fixture();f.seed();await f.run('play()');f.el('next').onclick();assert.equal(f.run('current'),1);assert.equal(f.audio.paused,false);assert.equal(f.el('play').attributes['aria-label'],'Pause');await f.flush();
 });
 test('previous retains its existing play-on-click behavior',async()=>{const f=fixture();f.seed();f.el('previous').onclick();assert.equal(f.run('current'),2);assert.equal(f.audio.paused,false);await f.flush()});
 test('pause and play do not change the artwork generation',async()=>{const f=fixture();f.seed();const generation=f.run('artworkRequest');await f.run('play()');f.el('play').onclick();assert.equal(f.run('artworkRequest'),generation);await f.flush()});
@@ -88,8 +88,10 @@ test('embedded image decode failure revokes its URL and tries sidecar',async()=>
  const f=fixture(rangeFetch(tag()));f.seed();f.run("tracks[0].artwork='One.jpg';select(0)");await f.flush();const url=f.el('cover').src;f.el('cover').onerror();assert(f.revoked.includes(url));assert(f.el('cover').src.endsWith('/One.jpg'));assert(f.el('cover').hidden);
 });
 test('a stale playback failure cannot overwrite the new song status',async()=>{
- const f=fixture();f.seed();let reject;f.audio.play=()=>new Promise((r,j)=>reject=j);const promise=f.run('play()');f.el('next').onclick();reject(Error('old track failed'));await promise;assert.equal(f.el('status').textContent,'');assert.equal(f.el('play').attributes['aria-label'],'Play');await f.flush();
+ const f=fixture();f.seed();let reject;const normalPlay=f.audio.play;f.audio.play=()=>{f.audio.play=normalPlay;return new Promise((r,j)=>reject=j)};const promise=f.run('play()');f.el('next').onclick();reject(Error('old track failed'));await promise;assert.equal(f.el('status').textContent,'');assert.equal(f.el('play').attributes['aria-label'],'Pause');await f.flush();
 });
 test('ID3v2.4 frame unsynchronisation is handled',async()=>{
  const raw=picture(4),unsynced=[];for(const b of raw){unsynced.push(b);if(b===255)unsynced.push(0)}const body=frame(4,'APIC',Buffer.from(unsynced),2);const data=Buffer.concat([Buffer.from([73,68,51,4,0,0]),syncsafe(body.length),body]);const f=fixture(rangeFetch(data));const b=await f.run("embeddedMp3Cover('song',new AbortController().signal)");assert.deepEqual(Buffer.from(await b.arrayBuffer()),image);
 });
+
+test('Shuffle, repeat playlist and Play continue through multiple cycles',async()=>{const f=fixture();f.seed();f.el('shuffle').onclick();f.el('repeat').onclick();f.el('play').onclick();for(let i=0;i<9;i++){f.audio.ended=true;f.audio.paused=true;f.audio.onended();assert.equal(f.audio.paused,false);assert.equal(f.el('play').attributes['aria-label'],'Pause')}await f.flush()});
