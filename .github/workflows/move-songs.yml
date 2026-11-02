@@ -1,0 +1,75 @@
+name: Move songs
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: move-songs
+  cancel-in-progress: false
+
+jobs:
+  move:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open main branch
+        uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - name: Move root MP3 files into used-songs
+        shell: python
+        run: |
+          from pathlib import Path
+          import os
+          import subprocess
+
+          destination = Path("used-songs")
+          songs = sorted(
+              p for p in Path(".").iterdir()
+              if p.is_file() and not p.is_symlink()
+              and p.suffix.lower() == ".mp3"
+          )
+
+          if os.path.lexists(destination) and (
+              not destination.is_dir() or destination.is_symlink()
+          ):
+              raise SystemExit("used-songs must be a regular folder.")
+
+          conflicts = [
+              p.name for p in songs
+              if os.path.lexists(destination / p.name)
+          ]
+          if conflicts:
+              raise SystemExit(
+                  "Nothing moved. These filenames already exist "
+                  "in used-songs: " + ", ".join(conflicts)
+              )
+
+          if songs:
+              destination.mkdir(exist_ok=True)
+
+          for song in songs:
+              subprocess.run(
+                  ["git", "mv", "--",
+                   str(song), str(destination / song.name)],
+                  check=True
+              )
+              print(f"Moved: {song.name}")
+
+          print(f"Finished: {len(songs)} MP3 file(s) moved.")
+
+      - name: Save changes to GitHub
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --cached --quiet; then
+            echo "No MP3 files to move."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Move root MP3 files into used-songs"
+          git push origin HEAD:main

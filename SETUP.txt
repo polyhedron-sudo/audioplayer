@@ -1,13 +1,13 @@
 SOUNDTRACK PLAYER — GITHUB PAGES
 
-1. Put index.html and your audio files together in the repository root.
+1. Keep index.html in the repository root; put active audio in used-songs/.
    If your existing website already has an index.html, use a separate soundtrack
    repository rather than overwriting your existing home page.
    Enable GitHub Pages for that root. Open the published page, not the GitHub file.
 
 2. On the usual username.github.io/repository/ address the player automatically
-   lists root audio files using GitHub's public API. Audio streams from Pages.
-   Prefix filenames with 01, 02, etc. for ordering. MP3 is a good starting format.
+   lists audio files in used-songs/ using GitHub's public API. Audio streams from Pages.
+   The playlist starts in a random order each time the page loads. MP3 is a good starting format.
    Format support depends on the listener's browser.
 
 3. Optional: edit CONFIG near the beginning of the script in index.html.
@@ -17,11 +17,23 @@ SOUNDTRACK PLAYER — GITHUB PAGES
      {file:'02-second-song.mp3',title:'Second Song',artist:'Your name'}
    ]
    Manual tracks bypass GitHub API availability/rate limits. Filenames must
-   match exactly, including capitals and extensions. Rename a file and its
-   comment identity changes. Changing only the display title preserves comments.
+   match exactly, including capitals and extensions. Use filenames relative to
+   used-songs/, without the folder prefix.
    For a custom domain, set owner and repo. Set branch when the audio lives on
    a publishing branch other than your repository default. Root publishing is
    assumed; a /docs publishing source requires manual track configuration.
+
+MOVING NEW MP3 UPLOADS
+
+Upload active songs directly into used-songs/. Alternatively, upload MP3s to the
+root and run Actions > Move songs > Run workflow. This manually triggered workflow
+moves only root MP3 files (including .MP3) into used-songs/ on main. It leaves all
+other files and subfolders alone. A duplicate destination filename stops the
+whole move before it starts; existing files are never overwritten.
+GitHub requires permission for the workflow to write to main. A commit made by
+the workflow's built-in token may not trigger a Pages rebuild; if necessary, rerun
+the Pages deployment after moving files. Uploading directly into used-songs/ is
+simpler for routine additions.
 
 BEHAVIOR AND LIMITS
 
@@ -39,5 +51,3 @@ A real-browser run was unavailable in the build environment. Your real songs sti
 
 References:
 https://docs.github.com/en/rest/repos/contents
-https://supabase.com/docs/guides/getting-started/api-keys
-https://supabase.com/docs/guides/database/postgres/row-level-security
