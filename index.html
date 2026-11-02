@@ -202,7 +202,7 @@ async function init(){
       tracks=files.filter(f=>f.type==='file'&&/\.(mp3|m4a|aac|ogg|oga|wav|flac|opus|webm)$/i.test(f.name)).sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true})).map(f=>{const stem=f.name.replace(/\.[^.]+$/,'');return{file:f.name,title:stem.replace(/_/g,' '),artwork:artwork.get(stem.toLowerCase())||''}});
     }
     if(!tracks.length)throw Error('No audio files found in used-songs. Add your songs there and reload.');
-    $('count').textContent=tracks.length+' tracks';document.querySelector('header p').textContent=tracks.length+' pieces. One world. Press play and stay awhile.';
+    $('count').textContent=tracks.length+' tracks';document.querySelector('header p').textContent=tracks.length+' pieces. One world. Click Shuffle, Repeat, Play and stay awhile.';
     tracks=mix(tracks);select(0);rebuild();
   }catch(e){tracks=[];order=[];current=-1;$('title').textContent='The music is on its way';$('status').textContent=e.name==='AbortError'?'The song list took too long to load. Please reload and try again.':e.message}
   finally{clearTimeout(timeout);controls.forEach(id=>$(id).disabled=!tracks.length)}
