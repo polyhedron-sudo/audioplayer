@@ -8,10 +8,10 @@ SOUNDTRACK PLAYER — GITHUB PAGES
 2. On the usual username.github.io/repository/ address the player automatically
    lists audio files in used-songs/ using GitHub's public API. Audio streams from Pages.
    The playlist starts in a random order each time the page loads.
-   The player reads embedded ID3 cover art from MP3s when the Pages host
-   supports byte-range requests. A same-name JPG, JPEG, PNG, or WebP file in
+   The player reads embedded ID3v2.2/v2.3/v2.4 cover art from MP3s.
+   Artwork loading is independent of playback; obsolete requests are cancelled. A same-name JPG, JPEG, PNG, or WebP file in
    used-songs/ is also supported as a fallback. Songs without artwork use the
-   built-in design. MP3 is a good starting format.
+   empty artwork frame. MP3 is a good starting format.
    Format support depends on the listener's browser.
 
 3. Optional: edit CONFIG near the beginning of the script in index.html.
@@ -42,6 +42,9 @@ simpler for routine additions.
 BEHAVIOR AND LIMITS
 
 Play/pause, next, previous, seek, volume, shuffle, repeat-all, and repeat-one.
+Next selects the next song and leaves it paused. Previous retains play-on-click.
+Clicking a song in the list selects and plays it. Natural endings continue to the
+next song unless the playlist has finished with repeat off.
 Tap Repeat to cycle off → playlist → one track → off.
 Shuffle goes through every track once before a repeat-all cycle starts again.
 Browsers require the visitor to press Play; there is no autoplay on arrival.
@@ -50,8 +53,10 @@ No download links or save controls are provided. Public audio remains accessible
 
 VERIFICATION
 
-JavaScript logic checks use mocked DOM, audio and repository responses.
-A real-browser run was unavailable in the build environment. Your real songs still need testing after publication.
+Run node --test tests/player.test.cjs for 30 automated regression checks.
+These simulate DOM/audio/network behavior, including embedded metadata fixtures.
+Live desktop browser checks supplement them. iPhone/Safari should still be checked
+on the device after significant changes; browser codec/volume behavior can differ.
 
 References:
 https://docs.github.com/en/rest/repos/contents
