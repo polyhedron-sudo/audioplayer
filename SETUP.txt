@@ -7,7 +7,7 @@ SOUNDTRACK PLAYER — GITHUB PAGES
 
 2. On the usual username.github.io/repository/ address the player automatically
    lists audio files in used-songs/ using GitHub's public API. Audio streams from Pages.
-   The playlist starts in a random order each time the page loads. MP3 is a good starting format.
+   The playlist starts in a random order each time the page loads.\n   Add a cover next to a song in used-songs/, using the same filename stem,\n   e.g. Song.mp3 plus Song.jpg. Supported images: JPG, JPEG, PNG, and WebP.\n   The cover appears in the player while that song is selected; missing covers\n   use the built-in artwork. Images are read from the same public Pages folder. MP3 is a good starting format.
    Format support depends on the listener's browser.
 
 3. Optional: edit CONFIG near the beginning of the script in index.html.
