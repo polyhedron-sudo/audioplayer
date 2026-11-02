@@ -24,7 +24,50 @@ const time=n=>Number.isFinite(n)?Math.floor(n/60)+':'+String(Math.floor(n%60)).p
 function mix(items){const a=[...items];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function rebuild(){const rest=tracks.map((_,i)=>i).filter(i=>i!==current);order=shuffled?[current,...mix(rest)]:tracks.map((_,i)=>i);position=order.indexOf(current)}
 function render(){ $('tracks').replaceChildren();tracks.forEach((t,i)=>{const row=document.createElement('div');row.className='track'+(i===current?' selected':'');const song=document.createElement('button');song.className='song';song.setAttribute('aria-label','Play '+t.title);if(i===current)song.setAttribute('aria-current','true');const num=document.createElement('span');num.className='number';num.textContent=String(i+1).padStart(2,'0');const names=document.createElement('span'),title=document.createElement('strong'),sub=document.createElement('small');title.textContent=t.title;sub.textContent=t.artist||t.file;names.append(title,sub);song.append(num,names);song.onclick=()=>{select(i);rebuild();play()};row.append(song);$('tracks').append(row)})}
-function select(i){request++;current=i;const cover=$('cover'),fallback=$('fallbackArt');cover.hidden=true;cover.removeAttribute('src');cover.onerror=()=>{cover.hidden=true;fallback.hidden=false};if(tracks[i].artwork){fallback.hidden=true;cover.alt='Album artwork for '+tracks[i].title;cover.src=new URL(encodeURIComponent(tracks[i].artwork),new URL('./used-songs/',location.href)).href;cover.hidden=false}audio.src=new URL(encodeURIComponent(tracks[i].file),new URL('./used-songs/',location.href)).href;audio.load();$('title').textContent=tracks[i].title;$('meta').textContent=[tracks[i].artist,tracks[i].info].filter(Boolean).join(' · ')||tracks[i].file;$('status').textContent='';$('seek').value=0;$('seek').disabled=true;$('elapsed').textContent='0:00';$('duration').textContent='0:00';render()}
+
+async function embeddedMp3Cover(url){
+  try{
+    const headerResponse=await fetch(url,{headers:{Range:'bytes=0-9'}});
+    if(headerResponse.status!==206)return null;
+    const header=new Uint8Array(await headerResponse.arrayBuffer());
+    if(header.length<10||header[0]!==73||header[1]!==68||header[2]!==51)return null;
+    const version=header[3];
+    if(version<3||version>4)return null;
+    const tagSize=(header[6]<<21)|(header[7]<<14)|(header[8]<<7)|header[9];
+    if(!tagSize||tagSize>8*1024*1024)return null;
+    const response=await fetch(url,{headers:{Range:'bytes=10-'+(9+tagSize)}});
+    if(response.status!==206)return null;
+    const data=new Uint8Array(await response.arrayBuffer());
+    let offset=0;
+    if(header[5]&0x40){
+      const ext=version===4?((data[0]<<21)|(data[1]<<14)|(data[2]<<7)|data[3]):((data[0]<<24)|(data[1]<<16)|(data[2]<<8)|data[3]);
+      offset=version===4?ext:ext+4;
+    }
+    while(offset+10<=data.length){
+      const id=String.fromCharCode(data[offset],data[offset+1],data[offset+2],data[offset+3]);
+      if(!/^[A-Z0-9]{4}$/.test(id))break;
+      let size=version===4?((data[offset+4]<<21)|(data[offset+5]<<14)|(data[offset+6]<<7)|data[offset+7]):((data[offset+4]<<24)|(data[offset+5]<<16)|(data[offset+6]<<8)|data[offset+7]);
+      const start=offset+10,end=start+size;
+      if(!size||end>data.length)break;
+      if(id==='APIC'){
+        const frame=data.subarray(start,end),encoding=frame[0];let p=1;
+        while(p<frame.length&&frame[p]!==0)p++;
+        p++;
+        if(p>=frame.length)break;
+        p++; // picture type
+        if(encoding===1||encoding===2){while(p+1<frame.length&&(frame[p]!==0||frame[p+1]!==0))p+=2;p+=2}
+        else{while(p<frame.length&&frame[p]!==0)p++;p++}
+        if(p>=frame.length)break;
+        const mimeEnd=frame.indexOf(0,1);
+        const mime=mimeEnd>1?new TextDecoder().decode(frame.subarray(1,mimeEnd)):'image/jpeg';
+        return URL.createObjectURL(new Blob([frame.subarray(p)],{type:mime==='image/jpg'?'image/jpeg':mime}));
+      }
+      offset=end;
+    }
+  }catch(_){}
+  return null;
+}
+function select(i){request++;const token=request;current=i;const cover=$('cover'),fallback=$('fallbackArt'),audioUrl=new URL(encodeURIComponent(tracks[i].file),new URL('./used-songs/',location.href)).href;cover.hidden=true;cover.removeAttribute('src');cover.onerror=()=>{cover.hidden=true;fallback.hidden=false};if(tracks[i].artwork){fallback.hidden=true;cover.alt='Album artwork for '+tracks[i].title;cover.src=new URL(encodeURIComponent(tracks[i].artwork),new URL('./used-songs/',location.href)).href;cover.hidden=false}else fallback.hidden=false;if(/\.mp3$/i.test(tracks[i].file))embeddedMp3Cover(audioUrl).then(src=>{if(token!==request)return;if(src){cover.alt='Album artwork for '+tracks[i].title;cover.src=src;cover.hidden=false;fallback.hidden=true}});audio.src=audioUrl;audio.load();$('title').textContent=tracks[i].title;$('meta').textContent=[tracks[i].artist,tracks[i].info].filter(Boolean).join(' · ')||tracks[i].file;$('status').textContent='';$('seek').value=0;$('seek').disabled=true;$('elapsed').textContent='0:00';$('duration').textContent='0:00';render()}
 async function play(){const token=++request;try{await audio.play();if(token===request)$('status').textContent=''}catch(e){if(token===request&&e.name!=='AbortError')$('status').textContent='Playback could not start. Press play again, or try another track. Check that the audio file is published and supported by this browser.'}}
 function advance(delta,automatic=false){if(!tracks.length)return;if(automatic&&repeat===2){audio.currentTime=0;play();return}let p=position+delta;if(p>=order.length||p<0){if(automatic&&repeat===0){$('status').textContent='End of playlist.';return}p=(p+order.length)%order.length;if(automatic&&shuffled&&order.length>1){const last=current;order=mix(order);if(order[0]===last)[order[0],order[1]]=[order[1],order[0]]}}position=p;select(order[position]);play()}
 $('play').onclick=()=>{if(current<0)return;audio.paused?play():audio.pause()};$('previous').onclick=()=>advance(-1);$('next').onclick=()=>advance(1);
