@@ -93,6 +93,9 @@ let lyricsController=null,lyricsRequest=0;
 // The canvas is decorative: audio continues normally if visualization is unavailable.
 const visualCanvas=$('visualizer'),visualCtx=visualCanvas.getContext('2d');
 let audioContext=null,analyser=null,volumeGain=null,frequencyData=null,visualFrame=0,visualActive=false;
+// Desktop uses a short scrolling history, so the horizontal axis represents time.
+const waveHistory=[[],[],[]];
+let lastWaveSample=0;
 const reducedMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 function setupVisualizer(){
   if(audioContext||!visualCtx)return;
@@ -116,6 +119,49 @@ function resizeVisualizer(){
     visualCanvas.width=width;visualCanvas.height=height;
   }
 }
+function paintLayeredVisualizer(w,h,playing){
+  const count=150,now=performance.now(),stepMs=55;
+  if(playing&&(!lastWaveSample||now-lastWaveSample>=stepMs)){
+    // Frequency bins at 44.1–48 kHz: roughly bass, body, and upper detail.
+    const ranges=[[1,7],[7,64],[64,210]];
+    ranges.forEach(([a,b],lane)=>{
+      let sum=0;
+      for(let i=a;i<Math.min(b,frequencyData.length);i++)sum+=frequencyData[i];
+      const energy=sum/Math.max(1,Math.min(b,frequencyData.length)-a)/255;
+      // Soft compression keeps quiet passages visible without inventing motion.
+      const value=Math.min(1,Math.pow(energy,.72)*(lane===2?2.25:1.75));
+      waveHistory[lane].push(value);
+      if(waveHistory[lane].length>count)waveHistory[lane].shift();
+    });
+    lastWaveSample=now;
+  }
+  const lanes=[
+    {y:.26,amp:.185,color:'rgba(197,215,156,.83)',glow:'#bdd69f',width:2.9},
+    {y:.56,amp:.185,color:'rgba(111,193,159,.86)',glow:'#80c9ad',width:2.3},
+    {y:.86,amp:.155,color:'rgba(141,191,202,.8)',glow:'#8ecbd0',width:1.65}
+  ];
+  lanes.forEach((style,lane)=>{
+    const base=h*style.y,values=waveHistory[lane];
+    visualCtx.beginPath();
+    visualCtx.strokeStyle='rgba(194,217,162,.09)';
+    visualCtx.lineWidth=1;
+    visualCtx.moveTo(0,base);visualCtx.lineTo(w,base);visualCtx.stroke();
+    if(!values.length)return;
+    visualCtx.save();
+    visualCtx.strokeStyle=style.color;
+    visualCtx.lineWidth=style.width*Math.min(window.devicePixelRatio||1,2);
+    visualCtx.lineJoin='round';visualCtx.lineCap='round';
+    visualCtx.shadowColor=style.glow;visualCtx.shadowBlur=playing?11:5;
+    visualCtx.beginPath();
+    // Newest audio appears on the right; the trace moves left as music progresses.
+    const offset=count-values.length,dx=w/(count-1);
+    values.forEach((v,i)=>{
+      const x=(offset+i)*dx,y=base-v*h*style.amp;
+      if(i===0)visualCtx.moveTo(x,y);else visualCtx.lineTo(x,y);
+    });
+    visualCtx.stroke();visualCtx.restore();
+  });
+}
 function paintVisualizer(){
   if(!visualCtx)return;
   resizeVisualizer();
@@ -123,7 +169,14 @@ function paintVisualizer(){
   if(!w||!h)return;
   visualCtx.clearRect(0,0,w,h);
   const playing=visualActive&&!audio.paused&&!audio.ended&&analyser&&!reducedMotion;
+  const desktop=window.matchMedia('(min-width:681px)').matches;
+  if(analyser)analyser.smoothingTimeConstant=desktop?.68:.84;
   if(playing)analyser.getByteFrequencyData(frequencyData);
+  if(desktop){
+    paintLayeredVisualizer(w,h,playing);
+    if(playing)visualFrame=requestAnimationFrame(paintVisualizer);
+    return;
+  }
   const bands=54,values=[];
   for(let i=0;i<bands;i++){
     if(!playing){values.push(.045);continue}
