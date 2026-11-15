@@ -56,6 +56,8 @@ header p{font-size:13px;line-height:1.35;margin:0;color:var(--muted)}
 /* On phones the cover and waveform share one row; transport stays within thumb reach. */
 @media(max-width:680px){
   main{padding-bottom:155px}
+  .layout{gap:12px}
+  .layout>.card:first-child{padding-bottom:14px}
   .card[aria-label="Music player"]{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:12px;row-gap:0;align-items:start}
   .card[aria-label="Music player"]>.art{grid-column:1;grid-row:1;width:100%;max-width:none;max-height:none}
   .card[aria-label="Music player"]>.visualizer{grid-column:2;grid-row:1;align-self:stretch;height:auto;min-height:0;margin:0;border-radius:15px}
@@ -64,8 +66,9 @@ header p{font-size:13px;line-height:1.35;margin:0;color:var(--muted)}
   .card[aria-label="Music player"]>#meta{grid-row:3}
   .card[aria-label="Music player"]>#seek{grid-row:4}
   .card[aria-label="Music player"]>#play-times{grid-row:5}
-  .card[aria-label="Music player"]>#status{grid-row:6}
-  .card[aria-label="Music player"]>#lyrics-toggle{grid-row:7;justify-self:center;margin:3px 0 12px}
+  .card[aria-label="Music player"]>#status{grid-row:6;min-height:0;margin:5px 0}
+  .card[aria-label="Music player"]>#status:empty{display:none}
+  .card[aria-label="Music player"]>#lyrics-toggle{grid-row:7;justify-self:center;margin:3px 0 8px}
   .card[aria-label="Music player"]>#lyrics-panel{grid-row:8}
   .transport{position:fixed;left:50%;bottom:calc(10px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:30;width:min(94vw,390px);margin:0;padding:10px 12px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;gap:7px 5px;background:#1b2929ed;border:1px solid #c2d9a23f;border-radius:20px;box-shadow:0 8px 32px #0009;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
   .transport #volume-group{grid-column:1/-1;grid-row:1;margin:0 4px 3px;gap:12px}
