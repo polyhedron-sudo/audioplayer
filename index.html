@@ -93,9 +93,8 @@ let lyricsController=null,lyricsRequest=0;
 // The canvas is decorative: audio continues normally if visualization is unavailable.
 const visualCanvas=$('visualizer'),visualCtx=visualCanvas.getContext('2d');
 let audioContext=null,analyser=null,volumeGain=null,frequencyData=null,visualFrame=0,visualActive=false;
-// Three scrolling frequency histories share the existing analyser on desktop and mobile.
-const waveHistory=[[],[],[]];
-let lastWaveSample=0;
+// Sample-accurate, mirrored traces: no scrolling history or invented motion.
+let waveformData=null;
 const reducedMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 function setupVisualizer(){
   if(audioContext||!visualCtx)return;
@@ -103,13 +102,14 @@ function setupVisualizer(){
   if(!AudioContextClass)return;
   try{
     audioContext=new AudioContextClass();
-    analyser=audioContext.createAnalyser();analyser.fftSize=1024;analyser.smoothingTimeConstant=.84;
+    analyser=audioContext.createAnalyser();analyser.fftSize=2048;analyser.smoothingTimeConstant=.6;
     frequencyData=new Uint8Array(analyser.frequencyBinCount);
+    waveformData=new Uint8Array(analyser.fftSize);
     const source=audioContext.createMediaElementSource(audio);
     volumeGain=audioContext.createGain();
     volumeGain.gain.value=Number($('volume').value);
     source.connect(analyser);analyser.connect(volumeGain);volumeGain.connect(audioContext.destination);
-  }catch(_){analyser=null;frequencyData=null;volumeGain=null}
+  }catch(_){analyser=null;frequencyData=null;waveformData=null;volumeGain=null}
 }
 function resizeVisualizer(){
   if(!visualCtx)return;
@@ -119,58 +119,55 @@ function resizeVisualizer(){
     visualCanvas.width=width;visualCanvas.height=height;
   }
 }
-function paintLayeredVisualizer(w,h,playing,desktop){
-  const count=desktop?96:64,now=performance.now(),stepMs=desktop?33:45;
-  // Cap history when the viewport changes between desktop and mobile.
-  waveHistory.forEach(values=>{while(values.length>count)values.shift()});
-  if(playing&&(!lastWaveSample||now-lastWaveSample>=stepMs)){
-    // Convert real frequency ranges to FFT bins using the actual sample rate.
-    const hzPerBin=audioContext.sampleRate/analyser.fftSize;
-    const ranges=[[45,250],[250,2500],[2500,8000]];
-    ranges.forEach(([lowHz,highHz],lane)=>{
-      const a=Math.max(1,Math.floor(lowHz/hzPerBin));
-      const b=Math.min(frequencyData.length,Math.ceil(highHz/hzPerBin));
-      let sumSquares=0,peak=0;
-      for(let i=a;i<b;i++){
-        const v=frequencyData[i]/255;
-        sumSquares+=v*v;
-        if(v>peak)peak=v;
+function paintSampleVisualizer(w,h,playing){
+  const mid=h*.5,scale=Math.min(window.devicePixelRatio||1,2);
+  const samples=waveformData;
+  const bins=Math.min(240,Math.max(80,Math.floor(w/3)));
+  const peaks=new Float32Array(bins),averages=new Float32Array(bins);
+  // Summarize the actual PCM signal. Quiet audio remains quiet; louder peaks grow.
+  let power=0;
+  if(playing&&samples){
+    for(let i=0;i<samples.length;i++){
+      const value=(samples[i]-128)/128;
+      power+=value*value;
+    }
+    const rms=Math.sqrt(power/samples.length);
+    // Bounded automatic display gain reveals quiet musical detail without showing silence as sound.
+    const sensitivity=Math.min(3.5,Math.max(1.1,.24/Math.max(.015,rms)));
+    for(let i=0;i<bins;i++){
+      const start=Math.floor(i*samples.length/bins);
+      const end=Math.max(start+1,Math.floor((i+1)*samples.length/bins));
+      let peak=0,sum=0;
+      for(let j=start;j<end;j++){
+        const v=(samples[j]-128)/128;
+        peak=Math.max(peak,Math.abs(v));
+        sum+=v;
       }
-      // RMS supplies musical body; the peak preserves short accents that averaging hid.
-      const rms=Math.sqrt(sumSquares/Math.max(1,b-a));
-      const energy=.6*rms+.4*peak;
-      const value=Math.min(1,Math.pow(energy,.85)*(lane===2?1.3:1.15));
-      waveHistory[lane].push(value);
-      if(waveHistory[lane].length>count)waveHistory[lane].shift();
-    });
-    lastWaveSample=now;
+      peaks[i]=Math.min(.94,peak*sensitivity);
+      averages[i]=Math.max(-.94,Math.min(.94,sum/(end-start)*sensitivity));
+    }
   }
-  const lanes=[
-    {y:.26,amp:.185,color:'rgba(197,215,156,.83)',glow:'#bdd69f',width:2.9},
-    {y:.56,amp:.185,color:'rgba(111,193,159,.86)',glow:'#80c9ad',width:2.3},
-    {y:.86,amp:.155,color:'rgba(141,191,202,.8)',glow:'#8ecbd0',width:1.65}
-  ];
-  lanes.forEach((style,lane)=>{
-    const base=h*style.y,values=waveHistory[lane];
-    visualCtx.beginPath();
-    visualCtx.strokeStyle='rgba(194,217,162,.09)';
-    visualCtx.lineWidth=1;
-    visualCtx.moveTo(0,base);visualCtx.lineTo(w,base);visualCtx.stroke();
-    if(!values.length)return;
+  const xAt=i=>i*w/(bins-1);
+  const stroke=(color,width,glow,points)=>{
     visualCtx.save();
-    visualCtx.strokeStyle=style.color;
-    visualCtx.lineWidth=style.width*(desktop?1:.78)*Math.min(window.devicePixelRatio||1,2);
-    visualCtx.lineJoin='round';visualCtx.lineCap='round';
-    visualCtx.shadowColor=style.glow;visualCtx.shadowBlur=playing?(desktop?11:6):3;
     visualCtx.beginPath();
-    // Newest audio appears on the right; the trace moves left as music progresses.
-    const offset=count-values.length,dx=w/(count-1);
-    values.forEach((v,i)=>{
-      const x=(offset+i)*dx,y=base-v*h*style.amp*(desktop?1:.85);
+    for(let i=0;i<bins;i++){
+      const y=points(i),x=xAt(i);
       if(i===0)visualCtx.moveTo(x,y);else visualCtx.lineTo(x,y);
-    });
+    }
+    visualCtx.strokeStyle=color;visualCtx.lineWidth=width*scale;
+    visualCtx.lineCap='round';visualCtx.lineJoin='round';
+    visualCtx.shadowColor=glow;visualCtx.shadowBlur=playing?10*scale:0;
     visualCtx.stroke();visualCtx.restore();
-  });
+  };
+  visualCtx.strokeStyle='rgba(194,217,162,.14)';
+  visualCtx.lineWidth=scale;
+  visualCtx.beginPath();visualCtx.moveTo(0,mid);visualCtx.lineTo(w,mid);visualCtx.stroke();
+  // Gold upper and teal lower silhouettes share real sample peaks: an audio-reactive reflection.
+  stroke('rgba(203,221,162,.8)',2.15,'#c2d9a2',i=>mid-peaks[i]*h*.42);
+  stroke('rgba(101,196,184,.68)',1.85,'#6ac5b8',i=>mid+peaks[i]*h*.42);
+  // A fine central green line preserves the positive/negative shape of the real samples.
+  stroke('rgba(132,235,173,.94)',1.45,'#80dfab',i=>mid-averages[i]*h*.43);
 }
 function paintVisualizer(){
   if(!visualCtx)return;
@@ -179,10 +176,8 @@ function paintVisualizer(){
   if(!w||!h)return;
   visualCtx.clearRect(0,0,w,h);
   const playing=visualActive&&!audio.paused&&!audio.ended&&analyser&&!reducedMotion;
-  const desktop=window.matchMedia('(min-width:681px)').matches;
-  if(analyser)analyser.smoothingTimeConstant=.42;
-  if(playing)analyser.getByteFrequencyData(frequencyData);
-  paintLayeredVisualizer(w,h,playing,desktop);
+  if(playing&&waveformData)analyser.getByteTimeDomainData(waveformData);
+  paintSampleVisualizer(w,h,playing);
   if(playing)visualFrame=requestAnimationFrame(paintVisualizer);
 }
 function stopVisualizer(){
@@ -350,7 +345,6 @@ async function loadArtwork(track,url){
 function select(i){
   closeLyrics();
   request++;current=i;audio.pause();stopVisualizer();
-  waveHistory.forEach(values=>values.length=0);lastWaveSample=0;
   $('lyrics-toggle').hidden=!tracks[i].lyrics;
   if(tracks[i].lyrics&&desktopMedia.matches) $('lyrics-toggle').click();
   const url=songURL(tracks[i].file);audio.src=url;audio.load();syncPlayButton();
