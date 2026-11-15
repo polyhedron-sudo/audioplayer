@@ -62,9 +62,12 @@ header p{font-size:13px;line-height:1.35;margin:0;color:var(--muted)}
   .card[aria-label="Music player"]>:not(.art):not(.visualizer){grid-column:1/-1}
   .card[aria-label="Music player"]>h2{grid-row:2;margin-top:18px}
   .card[aria-label="Music player"]>#meta{grid-row:3}
-  .card[aria-label="Music player"]>#volume-group{grid-row:4;margin:10px 0}
-  .card[aria-label="Music player"]>#lyrics-toggle{grid-row:5;justify-self:center;margin:3px 0 12px}
-  .card[aria-label="Music player"]>#lyrics-panel{grid-row:6}
+  .card[aria-label="Music player"]>#seek{grid-row:4}
+  .card[aria-label="Music player"]>#play-times{grid-row:5}
+  .card[aria-label="Music player"]>#status{grid-row:6}
+  .card[aria-label="Music player"]>#volume-group{grid-row:7;margin:10px 0}
+  .card[aria-label="Music player"]>#lyrics-toggle{grid-row:8;justify-self:center;margin:3px 0 12px}
+  .card[aria-label="Music player"]>#lyrics-panel{grid-row:9}
   .transport{position:fixed;left:50%;bottom:calc(10px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:30;width:min(94vw,390px);margin:0;padding:10px 12px;display:flex;justify-content:space-around;gap:7px;background:#1b2929ed;border:1px solid #c2d9a23f;border-radius:20px;box-shadow:0 8px 32px #0009;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
   .transport button{min-width:0;padding:10px}
   .transport .play{min-width:62px}
@@ -85,7 +88,7 @@ let tracks=[],current=-1,order=[],position=0,shuffled=false,repeat=0,request=0;
 let lyricsController=null,lyricsRequest=0;
 // The canvas is decorative: audio continues normally if visualization is unavailable.
 const visualCanvas=$('visualizer'),visualCtx=visualCanvas.getContext('2d');
-let audioContext=null,analyser=null,frequencyData=null,visualFrame=0,visualActive=false;
+let audioContext=null,analyser=null,volumeGain=null,frequencyData=null,visualFrame=0,visualActive=false;
 const reducedMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 function setupVisualizer(){
   if(audioContext||!visualCtx)return;
@@ -96,8 +99,10 @@ function setupVisualizer(){
     analyser=audioContext.createAnalyser();analyser.fftSize=1024;analyser.smoothingTimeConstant=.84;
     frequencyData=new Uint8Array(analyser.frequencyBinCount);
     const source=audioContext.createMediaElementSource(audio);
-    source.connect(analyser);analyser.connect(audioContext.destination);
-  }catch(_){analyser=null;frequencyData=null}
+    volumeGain=audioContext.createGain();
+    volumeGain.gain.value=Number($('volume').value);
+    source.connect(analyser);analyser.connect(volumeGain);volumeGain.connect(audioContext.destination);
+  }catch(_){analyser=null;frequencyData=null;volumeGain=null}
 }
 function resizeVisualizer(){
   if(!visualCtx)return;
@@ -348,7 +353,11 @@ audio.onerror=()=>{syncPlayButton();stopVisualizer();$('status').textContent='Th
 audio.onloadedmetadata=audio.ondurationchange=()=>{$('duration').textContent=time(audio.duration);$('seek').disabled=!(Number.isFinite(audio.duration)&&audio.duration>0)};
 audio.ontimeupdate=()=>{$('elapsed').textContent=time(Number.isFinite(audio.duration)&&audio.duration>0?Math.min(audio.currentTime,audio.duration):audio.currentTime);$('seek').value=Number.isFinite(audio.duration)&&audio.duration>0?Math.min(100,audio.currentTime/audio.duration*100):0};
 $('seek').oninput=()=>{if(Number.isFinite(audio.duration)&&audio.duration>0)audio.currentTime=Number($('seek').value)/100*audio.duration};
-$('volume').oninput=()=>audio.volume=Number($('volume').value);
+$('volume').oninput=()=>{
+  const level=Number($('volume').value);
+  if(volumeGain)volumeGain.gain.value=level;
+  else audio.volume=level;
+};
 async function init(){
   const controls=['play','previous','next','shuffle','repeat'];controls.forEach(id=>$(id).disabled=true);
   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),20000);
