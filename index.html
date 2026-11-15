@@ -93,7 +93,7 @@ let lyricsController=null,lyricsRequest=0;
 // The canvas is decorative: audio continues normally if visualization is unavailable.
 const visualCanvas=$('visualizer'),visualCtx=visualCanvas.getContext('2d');
 let audioContext=null,analyser=null,volumeGain=null,frequencyData=null,visualFrame=0,visualActive=false;
-// Desktop uses a short scrolling history, so the horizontal axis represents time.
+// Three scrolling frequency histories share the existing analyser on desktop and mobile.
 const waveHistory=[[],[],[]];
 let lastWaveSample=0;
 const reducedMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -119,8 +119,10 @@ function resizeVisualizer(){
     visualCanvas.width=width;visualCanvas.height=height;
   }
 }
-function paintLayeredVisualizer(w,h,playing){
-  const count=150,now=performance.now(),stepMs=55;
+function paintLayeredVisualizer(w,h,playing,desktop){
+  const count=desktop?150:72,now=performance.now(),stepMs=desktop?55:70;
+  // Cap history when the viewport changes between desktop and mobile.
+  waveHistory.forEach(values=>{while(values.length>count)values.shift()});
   if(playing&&(!lastWaveSample||now-lastWaveSample>=stepMs)){
     // Frequency bins at 44.1–48 kHz: roughly bass, body, and upper detail.
     const ranges=[[1,7],[7,64],[64,210]];
@@ -149,14 +151,14 @@ function paintLayeredVisualizer(w,h,playing){
     if(!values.length)return;
     visualCtx.save();
     visualCtx.strokeStyle=style.color;
-    visualCtx.lineWidth=style.width*Math.min(window.devicePixelRatio||1,2);
+    visualCtx.lineWidth=style.width*(desktop?1:.78)*Math.min(window.devicePixelRatio||1,2);
     visualCtx.lineJoin='round';visualCtx.lineCap='round';
-    visualCtx.shadowColor=style.glow;visualCtx.shadowBlur=playing?11:5;
+    visualCtx.shadowColor=style.glow;visualCtx.shadowBlur=playing?(desktop?11:6):3;
     visualCtx.beginPath();
     // Newest audio appears on the right; the trace moves left as music progresses.
     const offset=count-values.length,dx=w/(count-1);
     values.forEach((v,i)=>{
-      const x=(offset+i)*dx,y=base-v*h*style.amp;
+      const x=(offset+i)*dx,y=base-v*h*style.amp*(desktop?1:.85);
       if(i===0)visualCtx.moveTo(x,y);else visualCtx.lineTo(x,y);
     });
     visualCtx.stroke();visualCtx.restore();
@@ -170,40 +172,9 @@ function paintVisualizer(){
   visualCtx.clearRect(0,0,w,h);
   const playing=visualActive&&!audio.paused&&!audio.ended&&analyser&&!reducedMotion;
   const desktop=window.matchMedia('(min-width:681px)').matches;
-  if(analyser)analyser.smoothingTimeConstant=desktop?.68:.84;
+  if(analyser)analyser.smoothingTimeConstant=.68;
   if(playing)analyser.getByteFrequencyData(frequencyData);
-  if(desktop){
-    paintLayeredVisualizer(w,h,playing);
-    if(playing)visualFrame=requestAnimationFrame(paintVisualizer);
-    return;
-  }
-  const bands=54,values=[];
-  for(let i=0;i<bands;i++){
-    if(!playing){values.push(.045);continue}
-    // More detail in low and middle frequencies, where musical motion is most apparent.
-    const start=Math.floor(Math.pow(i/bands,1.65)*(frequencyData.length-1));
-    const end=Math.max(start+1,Math.floor(Math.pow((i+1)/bands,1.65)*frequencyData.length));
-    let sum=0;for(let j=start;j<end;j++)sum+=frequencyData[j];
-    values.push(Math.min(.93,Math.pow(sum/(end-start)/255,1.35)*1.65+.025));
-  }
-  const mid=h*.55,step=w/(bands-1);
-  const draw=(direction,opacity,lineWidth)=>{
-    const gradient=visualCtx.createLinearGradient(0,mid-direction*h*.42,0,mid+direction*h*.42);
-    gradient.addColorStop(0,'rgba(206,224,171,'+opacity+')');
-    gradient.addColorStop(1,'rgba(84,173,155,'+(opacity*.42)+')');
-    visualCtx.strokeStyle=gradient;visualCtx.lineWidth=lineWidth;visualCtx.lineJoin='round';
-    visualCtx.beginPath();
-    values.forEach((v,i)=>{
-      const x=i*step,y=mid-direction*(7+v*h*.37);
-      if(!i)visualCtx.moveTo(x,y);else visualCtx.lineTo(x,y);
-    });
-    visualCtx.stroke();
-  };
-  visualCtx.save();visualCtx.shadowColor='#a8d9b1';visualCtx.shadowBlur=playing?15:6;
-  draw(1,.88,Math.max(1.5,w/360));
-  visualCtx.shadowBlur=0;draw(-1,.28,Math.max(1,w/650));visualCtx.restore();
-  visualCtx.strokeStyle='#c2d9a21c';visualCtx.lineWidth=1;visualCtx.beginPath();
-  visualCtx.moveTo(0,mid);visualCtx.lineTo(w,mid);visualCtx.stroke();
+  paintLayeredVisualizer(w,h,playing,desktop);
   if(playing)visualFrame=requestAnimationFrame(paintVisualizer);
 }
 function stopVisualizer(){
