@@ -137,14 +137,14 @@ function paintSampleVisualizer(w,h,playing){
     for(let i=0;i<bins;i++){
       const start=Math.floor(i*samples.length/bins);
       const end=Math.max(start+1,Math.floor((i+1)*samples.length/bins));
-      let peak=0,sum=0;
+      let peak=0;
       for(let j=start;j<end;j++){
         const v=(samples[j]-128)/128;
         peak=Math.max(peak,Math.abs(v));
-        sum+=v;
       }
       peaks[i]=Math.min(.94,peak*sensitivity);
-      averages[i]=Math.max(-.94,Math.min(.94,sum/(end-start)*sensitivity));
+      const sample=(samples[Math.floor((start+end-1)/2)]-128)/128;
+      averages[i]=Math.max(-.94,Math.min(.94,sample*sensitivity));
     }
   }
   const xAt=i=>i*w/(bins-1);
