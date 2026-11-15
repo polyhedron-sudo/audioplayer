@@ -30,7 +30,10 @@ header p{font-size:13px;line-height:1.35;margin:0;color:var(--muted)}
 }
 /* Desktop: give the music player priority over the track list. */
 @media(min-width:681px){
-  .layout{grid-template-columns:minmax(0,1fr) minmax(230px,29%);gap:18px}
+  .layout{grid-template-columns:minmax(0,1fr) minmax(195px,23%);gap:16px}
+  .layout>.card:last-child{padding:20px 14px}
+  .layout>.card:last-child .song{padding:10px 4px;gap:9px}
+  .layout>.card:last-child .song strong{max-width:20ch;white-space:normal;overflow-wrap:anywhere;line-height:1.4}
   .card[aria-label="Music player"]{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:14px;align-items:start}
   .card[aria-label="Music player"]>.art{grid-column:1;grid-row:1;width:100%;max-width:none;max-height:none}
   .card[aria-label="Music player"]>.visualizer{grid-column:2;grid-row:1;align-self:start;width:100%;aspect-ratio:1/1;height:auto;min-height:0;margin:0}
