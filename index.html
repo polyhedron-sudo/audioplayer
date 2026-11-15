@@ -15,6 +15,19 @@
 .visualizer{position:relative;height:158px;margin:18px 0 12px;border:1px solid #c2d9a229;border-radius:17px;overflow:hidden;background:radial-gradient(ellipse at 50% 120%,#43675742,transparent 72%),linear-gradient(160deg,#182b2c,#101b22 62%,#192829);box-shadow:inset 0 1px #ffffff0b}
 .visualizer:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#ffffff05,transparent 34%,#00000016)}
 .visualizer canvas{display:block;width:100%;height:100%}
+/* Compact masthead: put listening and artwork ahead of page chrome. */
+main{padding-top:26px}
+header small{font-size:10px;letter-spacing:.16em}
+header h1{font-size:clamp(30px,4vw,44px);line-height:1.07;margin:5px 0 4px}
+header p{font-size:13px;line-height:1.35;margin:0;color:var(--muted)}
+.layout{margin-top:18px}
+@media(max-width:680px){
+  main{padding-top:13px}
+  header small{font-size:9px;letter-spacing:.12em}
+  header h1{font-size:30px;margin:3px 0}
+  header p{font-size:12px;line-height:1.3}
+  .layout{margin-top:12px}
+}
 /* On phones the cover and waveform share one row; transport stays within thumb reach. */
 @media(max-width:680px){
   main{padding-bottom:110px}
