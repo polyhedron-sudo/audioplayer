@@ -3,9 +3,8 @@
 <style>
 :root{color-scheme:dark;--bg:#101519;--panel:#1b2429;--ink:#eff3ef;--muted:#9faeac;--accent:#c2d9a2}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top left,#263c39,transparent 65%),var(--bg);color:var(--ink);font:16px system-ui,sans-serif;min-height:100vh}main{max-width:980px;margin:auto;padding:64px 24px}header small{letter-spacing:.22em;color:var(--accent)}h1{font:clamp(38px,7vw,68px) Georgia,serif;margin:14px 0}p{color:var(--muted);line-height:1.6}.layout{display:grid;grid-template-columns:1fr 1.15fr;gap:28px;margin-top:36px}.card{background:#1b2429dc;border:1px solid #ffffff13;border-radius:22px;padding:26px}.art{width:100%;max-width:260px;aspect-ratio:1;max-height:260px;margin:auto;display:grid;place-items:center;border-radius:15px;background:radial-gradient(circle,#6b806a 0,#253d39 38%,#131d22 70%);overflow:hidden}.disc{width:72%;aspect-ratio:1;border-radius:50%;background:repeating-radial-gradient(circle,#151f22 0 3px,#293437 4px 5px);display:grid;place-items:center;box-shadow:0 10px 35px #0007}.disc span{width:30%;aspect-ratio:1;display:grid;place-items:center;background:var(--accent);border-radius:50%;color:#24322c;font-size:28px}h2{font:27px Georgia,serif;margin-bottom:6px}.meta{min-height:26px;color:var(--muted)}button{font:inherit;cursor:pointer;color:inherit;background:#ffffff09;border:1px solid #ffffff18;border-radius:12px;padding:10px}button:hover{background:#ffffff16}button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:4px}button:disabled{opacity:.4;cursor:default}.transport{display:flex;justify-content:center;gap:12px;align-items:center;margin:22px 0}.play{background:var(--accent);color:#15221b;border:0;min-width:76px;font-size:22px}.on{color:var(--accent);border-color:var(--accent)}input[type=range]{accent-color:var(--accent);width:100%}.times{display:flex;justify-content:space-between;font:12px system-ui;color:var(--muted)}.volume{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--muted)}.track{display:flex;align-items:center;gap:10px;border-bottom:1px solid #ffffff0c;padding:9px 0}.song{display:flex;gap:15px;align-items:center;text-align:left;flex:1;min-width:0;background:none;border:0;padding:12px 8px}.song span:last-child{min-width:0}.song strong{display:block;overflow-wrap:anywhere;font-weight:500}.song small{display:block;color:var(--muted);margin-top:4px}.number{color:var(--muted);font-size:12px}.selected{background:#c2d9a20d;border-radius:12px}.selected .number{color:var(--accent)}.list-head{display:flex;justify-content:space-between;align-items:center}.list-head h2{font-size:23px;margin-top:0}#count{color:var(--muted);font-size:12px}#status{font-size:13px;min-height:22px}a{color:var(--accent)}footer{font-size:12px;color:var(--muted);margin-top:25px}@media(max-width:680px){main{padding:32px 18px}.layout{grid-template-columns:1fr}.art{max-width:240px}.card{padding:20px}}
  [hidden]{display:none!important}.art{position:relative}.art #cover{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:15px}
-
-
-</style></head><body><main><header><small>AN ORIGINAL LYRICAL COLLECTION</small><h1>BAF Soundtrack</h1><p>Click Shuffle, Repeat, Play and stay awhile.</p></header><div class="layout"><section class="card" aria-label="Music player"><div class="art"><img id="cover" alt="" hidden></div><h2 id="title">Finding the music…</h2><div id="meta" class="meta">Choose a track to begin</div><div class="transport"><button id="shuffle" aria-label="Shuffle" aria-pressed="false" title="Shuffle">⤨</button><button id="previous" aria-label="Previous track" title="Previous track">◀|</button><button id="play" class="play" aria-label="Play">▶</button><button id="next" aria-label="Next track" title="Next track">|▶</button><button id="repeat" aria-label="Repeat: off" title="Repeat: off">↻</button></div><input id="seek" type="range" min="0" max="100" value="0" step="0.1" aria-label="Playback position" disabled><div class="times"><span id="elapsed">0:00</span><span id="duration">0:00</span></div><p id="status" role="status" aria-live="polite"></p><label class="volume">Volume <input id="volume" type="range" min="0" max="1" step="0.01" value="1"></label></section><section class="card"><div class="list-head"><h2>Track listing</h2><span id="count"></span></div><div id="tracks"></div></section></div><footer>Original soundtrack · Listen and enjoy</footer></main><audio id="audio" preload="metadata" controlslist="nodownload" oncontextmenu="return false"></audio>
+.lyrics-toggle{display:block;margin:12px auto 0;padding:7px 15px;font-size:13px;color:var(--accent)}.lyrics-panel{margin-top:12px;border-top:1px solid #ffffff18;padding-top:12px}.lyrics-panel pre{font:inherit;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;max-height:300px;overflow:auto;margin:10px 0 0;color:var(--ink)}
+</style></head><body><main><header><small>AN ORIGINAL LYRICAL COLLECTION</small><h1>BAF Soundtrack</h1><p>Click Shuffle, Repeat, Play and stay awhile.</p></header><div class="layout"><section class="card" aria-label="Music player"><div class="art"><img id="cover" alt="" hidden></div><h2 id="title">Finding the music…</h2><div id="meta" class="meta">Choose a track to begin</div><div class="transport"><button id="shuffle" aria-label="Shuffle" aria-pressed="false" title="Shuffle">⤨</button><button id="previous" aria-label="Previous track" title="Previous track">◀|</button><button id="play" class="play" aria-label="Play">▶</button><button id="next" aria-label="Next track" title="Next track">|▶</button><button id="repeat" aria-label="Repeat: off" title="Repeat: off">↻</button></div><input id="seek" type="range" min="0" max="100" value="0" step="0.1" aria-label="Playback position" disabled><div class="times"><span id="elapsed">0:00</span><span id="duration">0:00</span></div><p id="status" role="status" aria-live="polite"></p><button id="lyrics-toggle" class="lyrics-toggle" aria-expanded="false" aria-controls="lyrics-panel" hidden>♫ Lyrics</button><section id="lyrics-panel" class="lyrics-panel" aria-label="Song lyrics" hidden><pre id="lyrics-text"></pre></section><label class="volume">Volume <input id="volume" type="range" min="0" max="1" step="0.01" value="1"></label></section><section class="card"><div class="list-head"><h2>Track listing</h2><span id="count"></span></div><div id="tracks"></div></section></div><footer>Original soundtrack · Listen and enjoy</footer></main><audio id="audio" preload="metadata" controlslist="nodownload" oncontextmenu="return false"></audio>
 <script>
 'use strict';
 // Keep index.html in the root and songs/artwork in used-songs/.
@@ -18,6 +17,29 @@ const owner=CONFIG.owner||(location.hostname.endsWith('.github.io')?location.hos
 const repo=CONFIG.repo||(owner?(parts.length&&parts[0]!=='index.html'?decodeURIComponent(parts[0]):owner+'.github.io'):'');
 const songURL=file=>new URL(encodeURIComponent(file),new URL('./used-songs/',location.href)).href;
 let tracks=[],current=-1,order=[],position=0,shuffled=false,repeat=0,request=0;
+let lyricsController=null,lyricsRequest=0;
+function closeLyrics(){
+  ++lyricsRequest;if(lyricsController)lyricsController.abort();lyricsController=null;
+  $('lyrics-toggle').hidden=true;$('lyrics-toggle').setAttribute('aria-expanded','false');
+  $('lyrics-panel').hidden=true;$('lyrics-text').textContent='';
+}
+$('lyrics-toggle').onclick=async()=>{
+  const panel=$('lyrics-panel'),button=$('lyrics-toggle');
+  if(!panel.hidden){panel.hidden=true;button.setAttribute('aria-expanded','false');return}
+  panel.hidden=false;button.setAttribute('aria-expanded','true');
+  const track=tracks[current];if(!track||!track.lyrics)return;
+  if(track.lyricsText!==undefined){$('lyrics-text').textContent=track.lyricsText;return}
+  const token=++lyricsRequest;
+  if(lyricsController)lyricsController.abort();
+  lyricsController=new AbortController();
+  $('lyrics-text').textContent='Loading lyrics…';
+  try{
+    const response=await fetch(songURL(track.lyrics),{signal:lyricsController.signal});
+    if(!response.ok)throw Error('Lyrics could not be loaded.');
+    const text=await response.text();if(token!==lyricsRequest)return;
+    track.lyricsText=text;$('lyrics-text').textContent=text;
+  }catch(e){if(token===lyricsRequest&&e.name!=='AbortError')$('lyrics-text').textContent='Lyrics could not be loaded.'}
+};
 const time=n=>Number.isFinite(n)&&n>=0?Math.floor(n/60)+':'+String(Math.floor(n%60)).padStart(2,'0'):'0:00';
 function mix(items){const a=[...items];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function rebuild(){const rest=tracks.map((_,i)=>i).filter(i=>i!==current);order=shuffled?[current,...mix(rest)]:tracks.map((_,i)=>i);position=order.indexOf(current)}
@@ -150,7 +172,9 @@ async function loadArtwork(track,url){
   finally{clearTimeout(timeout)}
 }
 function select(i){
+  closeLyrics();
   request++;current=i;audio.pause();
+  $('lyrics-toggle').hidden=!tracks[i].lyrics;
   const url=songURL(tracks[i].file);audio.src=url;audio.load();syncPlayButton();
   loadArtwork(tracks[i],url);
   $('title').textContent=tracks[i].title;
@@ -197,9 +221,10 @@ async function init(){
       const response=await fetch(url,{headers:{Accept:'application/vnd.github+json'},signal:controller.signal});
       if(!response.ok)throw Error(response.status===403||response.status===429?'GitHub’s song-list limit was reached. Please try again later.':'Could not list used-songs (HTTP '+response.status+').');
       const files=await response.json();if(!Array.isArray(files))throw Error('Repository listing was not a folder.');
-      const artwork=new Map();
+      const artwork=new Map(),lyrics=new Map();
+      for(const f of files){if(f.type==='file'&&/\.txt$/i.test(f.name)){const stem=f.name.slice(0,-4).toLowerCase();if(!lyrics.has(stem))lyrics.set(stem,f.name)}}
       for(const f of files){const match=f.type==='file'&&f.name.match(/\.(jpe?g|png|webp)$/i);if(match){const stem=f.name.slice(0,-match[0].length).toLowerCase();if(!artwork.has(stem)||match[1].toLowerCase()==='jpg')artwork.set(stem,f.name)}}
-      tracks=files.filter(f=>f.type==='file'&&/\.(mp3|m4a|aac|ogg|oga|wav|flac|opus|webm)$/i.test(f.name)).sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true})).map(f=>{const stem=f.name.replace(/\.[^.]+$/,'');return{file:f.name,title:stem.replace(/_/g,' '),artwork:artwork.get(stem.toLowerCase())||''}});
+      tracks=files.filter(f=>f.type==='file'&&/\.(mp3|m4a|aac|ogg|oga|wav|flac|opus|webm)$/i.test(f.name)).sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true})).map(f=>{const stem=f.name.replace(/\.[^.]+$/,'');return{file:f.name,title:stem.replace(/_/g,' '),artwork:artwork.get(stem.toLowerCase())||'',lyrics:lyrics.get(stem.toLowerCase())||''}});
     }
     if(!tracks.length)throw Error('No audio files found in used-songs. Add your songs there and reload.');
     $('count').textContent=tracks.length+' tracks';document.querySelector('header p').textContent=tracks.length+' pieces. One world. Click Shuffle, Repeat, Play and stay awhile.';
