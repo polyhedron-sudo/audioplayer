@@ -129,9 +129,9 @@ function paintVisualizer(){
   const sampleRate=audioContext?audioContext.sampleRate:44100;
   const binHz=sampleRate/(analyser?analyser.fftSize:4096);
   const lanes=[
-    {low:35,high:250,center:.18,gain:1.9,color:[209,225,163],glow:'#cde1aa'},
-    {low:250,high:2500,center:.5,gain:2.2,color:[111,200,161],glow:'#8dd9ae'},
-    {low:2500,high:10000,center:.82,gain:2.7,color:[125,194,204],glow:'#8bc8d0'}
+    {low:35,high:250,center:.18,gain:1.35,color:[209,225,163],glow:'#cde1aa'},
+    {low:250,high:2500,center:.5,gain:1.55,color:[111,200,161],glow:'#8dd9ae'},
+    {low:2500,high:10000,center:.82,gain:1.9,color:[125,194,204],glow:'#8bc8d0'}
   ];
   const bands=52,scale=Math.min(window.devicePixelRatio||1,2);
   for(const lane of lanes){
