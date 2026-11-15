@@ -1,4 +1,4 @@
-SOUNDTRACK PLAYER — GITHUB PAGES
+SOUNDTRACK PLAYER — GITHUB PAGES https://polyhedron-sudo.github.io/audioplayer/
 
 1. Keep index.html in the repository root; put active audio in used-songs/.
    If your existing website already has an index.html, use a separate soundtrack
