@@ -28,25 +28,30 @@ header p{font-size:13px;line-height:1.35;margin:0;color:var(--muted)}
   header p{font-size:12px;line-height:1.3}
   .layout{margin-top:12px}
 }
-/* Desktop: give the music player priority over the track list. */
+/* Desktop experiment: music and visuals lead; controls share the playlist column. */
 @media(min-width:681px){
-  .layout{grid-template-columns:minmax(0,1fr) minmax(195px,23%);gap:16px}
-  .layout>.card:last-child{padding:20px 14px}
-  .layout>.card:last-child .song{padding:10px 4px;gap:9px}
+  .layout{grid-template-columns:minmax(0,1fr) minmax(285px,32%);gap:17px;align-items:start}
+  .layout>.card:last-child{padding:20px 15px}
+  .layout>.card:last-child .song{padding:9px 3px;gap:9px}
   .layout>.card:last-child .song strong{max-width:20ch;white-space:normal;overflow-wrap:anywhere;line-height:1.4}
-  .card[aria-label="Music player"]{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:14px;align-items:start}
+  .card[aria-label="Music player"]{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:14px;align-items:start;align-content:start}
   .card[aria-label="Music player"]>.art{grid-column:1;grid-row:1;width:100%;max-width:none;max-height:none}
   .card[aria-label="Music player"]>.visualizer{grid-column:2;grid-row:1;align-self:start;width:100%;aspect-ratio:1/1;height:auto;min-height:0;margin:0}
   .card[aria-label="Music player"]>:not(.art):not(.visualizer){grid-column:1/-1}
   .card[aria-label="Music player"]>h2{grid-row:2;margin-top:18px}
   .card[aria-label="Music player"]>#meta{grid-row:3}
-  .card[aria-label="Music player"]>.transport{grid-row:4;margin:18px 0}
-  .card[aria-label="Music player"]>#seek{grid-row:5}
-  .card[aria-label="Music player"]>.times{grid-row:6}
-  .card[aria-label="Music player"]>#status{grid-row:7}
-  .card[aria-label="Music player"]>#lyrics-toggle{grid-row:8;justify-self:center;margin:10px 0}
-  .card[aria-label="Music player"]>#lyrics-panel{grid-row:9}
-  .card[aria-label="Music player"]>.volume{grid-row:10}
+  .card[aria-label="Music player"]>#lyrics-toggle{grid-row:4;justify-self:center;margin:8px 0}
+  .card[aria-label="Music player"]>#lyrics-panel{grid-row:5;margin-top:6px}
+  .card[aria-label="Music player"]>#lyrics-panel pre{max-height:230px}
+  #desktop-controls{border-bottom:1px solid #ffffff18;margin-bottom:18px;padding-bottom:13px}
+  #desktop-controls:empty{display:none}
+  #desktop-controls .transport{justify-content:space-between;gap:5px;margin:0 0 15px}
+  #desktop-controls .transport button{min-width:0;padding:9px 7px}
+  #desktop-controls .transport .play{min-width:51px}
+  #desktop-controls #seek{display:block}
+  #desktop-controls .times{margin:6px 0 9px}
+  #desktop-controls #status{margin:0;min-height:0}
+  #desktop-controls .volume{margin-top:8px}
 }
 /* On phones the cover and waveform share one row; transport stays within thumb reach. */
 @media(max-width:680px){
@@ -62,7 +67,7 @@ header p{font-size:13px;line-height:1.35;margin:0;color:var(--muted)}
   .transport button{min-width:0;padding:10px}
   .transport .play{min-width:62px}
 }
-</style></head><body><main><header><small>AN ORIGINAL LYRICAL COLLECTION</small><h1>BAF Soundtrack</h1><p>Click Shuffle, Repeat, Play and stay awhile.</p></header><div class="layout"><section class="card" aria-label="Music player"><div class="art"><img id="cover" alt="" hidden></div><h2 id="title">Finding the music…</h2><div id="meta" class="meta">Choose a track to begin</div><div class="transport"><button id="shuffle" aria-label="Shuffle" aria-pressed="false" title="Shuffle">⤨</button><button id="previous" aria-label="Previous track" title="Previous track">◀|</button><button id="play" class="play" aria-label="Play">▶</button><button id="next" aria-label="Next track" title="Next track">|▶</button><button id="repeat" aria-label="Repeat: off" title="Repeat: off">↻</button></div><input id="seek" type="range" min="0" max="100" value="0" step="0.1" aria-label="Playback position" disabled><div class="times"><span id="elapsed">0:00</span><span id="duration">0:00</span></div><p id="status" role="status" aria-live="polite"></p><div class="visualizer" aria-hidden="true"><canvas id="visualizer"></canvas></div><button id="lyrics-toggle" class="lyrics-toggle" aria-expanded="false" aria-controls="lyrics-panel" hidden>♫ Lyrics</button><section id="lyrics-panel" class="lyrics-panel" aria-label="Song lyrics" hidden><pre id="lyrics-text"></pre></section><label class="volume">Volume <input id="volume" type="range" min="0" max="1" step="0.01" value="1"></label></section><section class="card"><div class="list-head"><h2>Track listing</h2><span id="count"></span></div><div id="tracks"></div></section></div><footer>Original soundtrack · Listen and enjoy</footer></main><audio id="audio" preload="metadata" controlslist="nodownload" oncontextmenu="return false"></audio>
+</style></head><body><main><header><small>AN ORIGINAL LYRICAL COLLECTION</small><h1>BAF Soundtrack</h1><p>Click Shuffle, Repeat, Play and stay awhile.</p></header><div class="layout"><section class="card" aria-label="Music player"><div class="art"><img id="cover" alt="" hidden></div><h2 id="title">Finding the music…</h2><div id="meta" class="meta">Choose a track to begin</div><div id="transport" class="transport"><button id="shuffle" aria-label="Shuffle" aria-pressed="false" title="Shuffle">⤨</button><button id="previous" aria-label="Previous track" title="Previous track">◀|</button><button id="play" class="play" aria-label="Play">▶</button><button id="next" aria-label="Next track" title="Next track">|▶</button><button id="repeat" aria-label="Repeat: off" title="Repeat: off">↻</button></div><input id="seek" type="range" min="0" max="100" value="0" step="0.1" aria-label="Playback position" disabled><div id="play-times" class="times"><span id="elapsed">0:00</span><span id="duration">0:00</span></div><p id="status" role="status" aria-live="polite"></p><div class="visualizer" aria-hidden="true"><canvas id="visualizer"></canvas></div><button id="lyrics-toggle" class="lyrics-toggle" aria-expanded="false" aria-controls="lyrics-panel" hidden>♫ Lyrics</button><section id="lyrics-panel" class="lyrics-panel" aria-label="Song lyrics" hidden><pre id="lyrics-text"></pre></section><label id="volume-group" class="volume">Volume <input id="volume" type="range" min="0" max="1" step="0.01" value="1"></label></section><section class="card"><div id="desktop-controls" aria-label="Playback controls"></div><div class="list-head"><h2>Track listing</h2><span id="count"></span></div><div id="tracks"></div></section></div><footer>Original soundtrack · Listen and enjoy</footer></main><audio id="audio" preload="metadata" controlslist="nodownload" oncontextmenu="return false"></audio>
 <script>
 'use strict';
 // Keep index.html in the root and songs/artwork in used-songs/.
@@ -303,6 +308,7 @@ function select(i){
   closeLyrics();
   request++;current=i;audio.pause();stopVisualizer();
   $('lyrics-toggle').hidden=!tracks[i].lyrics;
+  if(tracks[i].lyrics&&desktopMedia.matches) $('lyrics-toggle').click();
   const url=songURL(tracks[i].file);audio.src=url;audio.load();syncPlayButton();
   loadArtwork(tracks[i],url);
   $('title').textContent=tracks[i].title;
@@ -363,6 +369,27 @@ async function init(){
   }catch(e){tracks=[];order=[];current=-1;$('title').textContent='The music is on its way';$('status').textContent=e.name==='AbortError'?'The song list took too long to load. Please reload and try again.':e.message}
   finally{clearTimeout(timeout);controls.forEach(id=>$(id).disabled=!tracks.length)}
 }
+// Move the existing controls—not copies—to the right on desktop.
+const desktopMedia=window.matchMedia('(min-width:681px)');
+const controlElements=['transport','seek','play-times','status','volume-group'].map(id=>{
+  const el=$(id),home=document.createComment('home-'+id);
+  el.parentNode.insertBefore(home,el);
+  return {el,home};
+});
+function arrangeControls(){
+  const desktop=desktopMedia.matches,host=$('desktop-controls');
+  for(const {el,home} of controlElements){
+    if(desktop)host.appendChild(el);
+    else home.parentNode.insertBefore(el,home.nextSibling);
+  }
+  // Preserve the mobile layout's original order using each original anchor.
+  if(!desktop){
+    for(const {el,home} of controlElements)home.parentNode.insertBefore(el,home.nextSibling);
+  }
+}
+desktopMedia.addEventListener?.('change',arrangeControls);
+if(!desktopMedia.addEventListener)desktopMedia.addListener(arrangeControls);
+arrangeControls();
 paintVisualizer();
 init();
 </script></body></html>
