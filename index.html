@@ -22,7 +22,9 @@
   .card[aria-label="Music player"]>.art{grid-column:1;grid-row:1;width:100%;max-width:none;max-height:none}
   .card[aria-label="Music player"]>.visualizer{grid-column:2;grid-row:1;align-self:stretch;height:auto;min-height:0;margin:0;border-radius:15px}
   .card[aria-label="Music player"]>:not(.art):not(.visualizer){grid-column:1/-1}
-  .card[aria-label="Music player"]>h2{margin-top:18px}
+  .card[aria-label="Music player"]>h2{grid-row:2;margin-top:18px}
+  .card[aria-label="Music player"]>#lyrics-toggle{grid-row:3;justify-self:center;margin:3px 0 12px}
+  .card[aria-label="Music player"]>#meta{grid-row:4}
   .transport{position:fixed;left:50%;bottom:calc(10px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:30;width:min(94vw,390px);margin:0;padding:10px 12px;display:flex;justify-content:space-around;gap:7px;background:#1b2929ed;border:1px solid #c2d9a23f;border-radius:20px;box-shadow:0 8px 32px #0009;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
   .transport button{min-width:0;padding:10px}
   .transport .play{min-width:62px}
