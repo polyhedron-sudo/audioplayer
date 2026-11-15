@@ -53,17 +53,6 @@ header p{font-size:13px;line-height:1.35;margin:0;color:var(--muted)}
   #desktop-controls #status{margin:0;min-height:0}
   #desktop-controls .volume{margin-top:8px}
 }
-/* Full-viewport desktop visualizer: the page becomes the music canvas. */
-@media(min-width:681px){
-  body>main{position:relative;z-index:1}
-  body>.visualizer{position:fixed;inset:0;width:100%;height:100%;height:100dvh;min-height:0;margin:0;border:0;border-radius:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse at 50% 55%,#2e50431f,transparent 70%)}
-  body>.visualizer:before{background:linear-gradient(180deg,#1015196e,transparent 40%,#10151955)}
-  .layout>.card{background:#1b2429c9;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-  .card[aria-label="Music player"]{grid-template-columns:minmax(0,1fr)}
-  .card[aria-label="Music player"]>.art{grid-column:1;grid-row:1;width:min(100%,410px);max-width:410px;justify-self:center}
-  .card[aria-label="Music player"]>h2{grid-row:2;text-align:center}
-  .card[aria-label="Music player"]>#meta{text-align:center}
-}
 /* On phones the cover and waveform share one row; transport stays within thumb reach. */
 @media(max-width:680px){
   main{padding-bottom:110px}
@@ -94,7 +83,7 @@ let tracks=[],current=-1,order=[],position=0,shuffled=false,repeat=0,request=0;
 let lyricsController=null,lyricsRequest=0;
 // The canvas is decorative: audio continues normally if visualization is unavailable.
 const visualCanvas=$('visualizer'),visualCtx=visualCanvas.getContext('2d');
-let audioContext=null,analyser=null,frequencyData=null,visualFrame=0,visualActive=false,lastVisualDraw=0;
+let audioContext=null,analyser=null,frequencyData=null,visualFrame=0,visualActive=false;
 const reducedMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 function setupVisualizer(){
   if(audioContext||!visualCtx)return;
@@ -110,36 +99,30 @@ function setupVisualizer(){
 }
 function resizeVisualizer(){
   if(!visualCtx)return;
-  const rect=visualCanvas.getBoundingClientRect(),scale=Math.min(window.devicePixelRatio||1,desktopMedia.matches?1.5:2);
+  const rect=visualCanvas.getBoundingClientRect(),scale=Math.min(window.devicePixelRatio||1,2);
   const width=Math.round(rect.width*scale),height=Math.round(rect.height*scale);
   if(width&&height&&(visualCanvas.width!==width||visualCanvas.height!==height)){
     visualCanvas.width=width;visualCanvas.height=height;
   }
 }
-function paintVisualizer(now=0){
+function paintVisualizer(){
   if(!visualCtx)return;
-  const desktop=desktopMedia.matches;
-  const animate=visualActive&&!audio.paused&&!audio.ended&&analyser&&!reducedMotion&&!document.hidden;
-  if(animate&&desktop&&now&&lastVisualDraw&&now-lastVisualDraw<33){
-    visualFrame=requestAnimationFrame(paintVisualizer);return;
-  }
-  lastVisualDraw=now;
   resizeVisualizer();
   const w=visualCanvas.width,h=visualCanvas.height;
   if(!w||!h)return;
   visualCtx.clearRect(0,0,w,h);
-  const playing=animate;
+  const playing=visualActive&&!audio.paused&&!audio.ended&&analyser&&!reducedMotion;
   if(playing)analyser.getByteFrequencyData(frequencyData);
-  const bands=desktop?90:54,values=[];
+  const bands=54,values=[];
   for(let i=0;i<bands;i++){
     if(!playing){values.push(.045);continue}
     // More detail in low and middle frequencies, where musical motion is most apparent.
     const start=Math.floor(Math.pow(i/bands,1.65)*(frequencyData.length-1));
     const end=Math.max(start+1,Math.floor(Math.pow((i+1)/bands,1.65)*frequencyData.length));
     let sum=0;for(let j=start;j<end;j++)sum+=frequencyData[j];
-    values.push(Math.min(.93,Math.pow(sum/(end-start)/255,1.35)*(desktop?1.25:1.65)+.025));
+    values.push(Math.min(.93,Math.pow(sum/(end-start)/255,1.35)*1.65+.025));
   }
-  const mid=desktop?h*.54:h*.55,step=w/(bands-1);
+  const mid=h*.55,step=w/(bands-1);
   const draw=(direction,opacity,lineWidth)=>{
     const gradient=visualCtx.createLinearGradient(0,mid-direction*h*.42,0,mid+direction*h*.42);
     gradient.addColorStop(0,'rgba(206,224,171,'+opacity+')');
@@ -147,30 +130,26 @@ function paintVisualizer(now=0){
     visualCtx.strokeStyle=gradient;visualCtx.lineWidth=lineWidth;visualCtx.lineJoin='round';
     visualCtx.beginPath();
     values.forEach((v,i)=>{
-      const x=i*step,y=mid-direction*((desktop?10:7)+v*h*(desktop?.27:.37));
+      const x=i*step,y=mid-direction*(7+v*h*.37);
       if(!i)visualCtx.moveTo(x,y);else visualCtx.lineTo(x,y);
     });
     visualCtx.stroke();
   };
-  visualCtx.save();visualCtx.shadowColor='#a8d9b1';visualCtx.shadowBlur=playing?(desktop?22:15):6;
-  draw(1,desktop?.38:.88,Math.max(1.5,w/(desktop?850:360)));
-  visualCtx.shadowBlur=0;draw(-1,desktop?.17:.28,Math.max(1,w/(desktop?1300:650)));visualCtx.restore();
-  visualCtx.strokeStyle=desktop?'#c2d9a214':'#c2d9a21c';visualCtx.lineWidth=1;visualCtx.beginPath();
+  visualCtx.save();visualCtx.shadowColor='#a8d9b1';visualCtx.shadowBlur=playing?15:6;
+  draw(1,.88,Math.max(1.5,w/360));
+  visualCtx.shadowBlur=0;draw(-1,.28,Math.max(1,w/650));visualCtx.restore();
+  visualCtx.strokeStyle='#c2d9a21c';visualCtx.lineWidth=1;visualCtx.beginPath();
   visualCtx.moveTo(0,mid);visualCtx.lineTo(w,mid);visualCtx.stroke();
   if(playing)visualFrame=requestAnimationFrame(paintVisualizer);
 }
 function stopVisualizer(){
-  visualActive=false;lastVisualDraw=0;cancelAnimationFrame(visualFrame);paintVisualizer();
+  visualActive=false;cancelAnimationFrame(visualFrame);paintVisualizer();
 }
 function startVisualizer(){
   if(!visualCtx)return;
   visualActive=true;cancelAnimationFrame(visualFrame);paintVisualizer();
 }
 window.addEventListener('resize',()=>{if(!visualActive||reducedMotion)paintVisualizer()});
-document.addEventListener('visibilitychange',()=>{
-  cancelAnimationFrame(visualFrame);lastVisualDraw=0;
-  if(!document.hidden&&visualActive)startVisualizer();
-});
 
 function closeLyrics(){
   ++lyricsRequest;if(lyricsController)lyricsController.abort();lyricsController=null;
@@ -407,21 +386,7 @@ function arrangeControls(){
 desktopMedia.addEventListener?.('change',arrangeControls);
 if(!desktopMedia.addEventListener)desktopMedia.addListener(arrangeControls);
 arrangeControls();
-// Rehome the SAME visualizer on desktop; restore it beside the cover on mobile.
-const visualHome=document.createComment('visualizer-home');
-visualCanvas.parentNode.parentNode.insertBefore(visualHome,visualCanvas.parentNode);
-function arrangeVisualizer(){
-  const host=visualCanvas.parentNode;
-  if(desktopMedia.matches)document.body.appendChild(host);
-  else visualHome.parentNode.insertBefore(host,visualHome.nextSibling);
-  lastVisualDraw=0;
-  cancelAnimationFrame(visualFrame);
-  paintVisualizer();
-  if(visualActive&&!audio.paused&&!document.hidden&&!reducedMotion)visualFrame=requestAnimationFrame(paintVisualizer);
-}
-desktopMedia.addEventListener?.('change',arrangeVisualizer);
-if(!desktopMedia.addEventListener)desktopMedia.addListener(arrangeVisualizer);
-arrangeVisualizer();
+paintVisualizer();
 init();
 </script></body></html>
 
