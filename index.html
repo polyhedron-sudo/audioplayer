@@ -11,7 +11,12 @@
 .lyrics-panel:after{content:"";display:block;width:44px;height:1px;margin:17px auto 0;background:linear-gradient(90deg,transparent,#d0d5aa87,transparent)}
 .lyrics-panel pre{font:normal clamp(16px,2vw,18px)/1.9 Georgia,"Times New Roman",serif;text-align:center;letter-spacing:.012em;white-space:pre-wrap;overflow-wrap:anywhere;max-height:340px;overflow:auto;margin:0;color:#f0eddd;text-shadow:0 1px 10px #00000040;scrollbar-color:#798e77 transparent}
 @media(max-width:680px){.lyrics-panel{padding:24px 13px 17px}.lyrics-panel pre{font-size:16px;line-height:1.8;max-height:300px}}
-</style></head><body><main><header><small>AN ORIGINAL LYRICAL COLLECTION</small><h1>BAF Soundtrack</h1><p>Click Shuffle, Repeat, Play and stay awhile.</p></header><div class="layout"><section class="card" aria-label="Music player"><div class="art"><img id="cover" alt="" hidden></div><h2 id="title">Finding the music…</h2><div id="meta" class="meta">Choose a track to begin</div><div class="transport"><button id="shuffle" aria-label="Shuffle" aria-pressed="false" title="Shuffle">⤨</button><button id="previous" aria-label="Previous track" title="Previous track">◀|</button><button id="play" class="play" aria-label="Play">▶</button><button id="next" aria-label="Next track" title="Next track">|▶</button><button id="repeat" aria-label="Repeat: off" title="Repeat: off">↻</button></div><input id="seek" type="range" min="0" max="100" value="0" step="0.1" aria-label="Playback position" disabled><div class="times"><span id="elapsed">0:00</span><span id="duration">0:00</span></div><p id="status" role="status" aria-live="polite"></p><button id="lyrics-toggle" class="lyrics-toggle" aria-expanded="false" aria-controls="lyrics-panel" hidden>♫ Lyrics</button><section id="lyrics-panel" class="lyrics-panel" aria-label="Song lyrics" hidden><pre id="lyrics-text"></pre></section><label class="volume">Volume <input id="volume" type="range" min="0" max="1" step="0.01" value="1"></label></section><section class="card"><div class="list-head"><h2>Track listing</h2><span id="count"></span></div><div id="tracks"></div></section></div><footer>Original soundtrack · Listen and enjoy</footer></main><audio id="audio" preload="metadata" controlslist="nodownload" oncontextmenu="return false"></audio>
+/* A quiet, audio-responsive landscape beneath the player. */
+.visualizer{position:relative;height:158px;margin:18px 0 12px;border:1px solid #c2d9a229;border-radius:17px;overflow:hidden;background:radial-gradient(ellipse at 50% 120%,#43675742,transparent 72%),linear-gradient(160deg,#182b2c,#101b22 62%,#192829);box-shadow:inset 0 1px #ffffff0b}
+.visualizer:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#ffffff05,transparent 34%,#00000016)}
+.visualizer canvas{display:block;width:100%;height:100%}
+@media(max-width:680px){.visualizer{height:132px}}
+</style></head><body><main><header><small>AN ORIGINAL LYRICAL COLLECTION</small><h1>BAF Soundtrack</h1><p>Click Shuffle, Repeat, Play and stay awhile.</p></header><div class="layout"><section class="card" aria-label="Music player"><div class="art"><img id="cover" alt="" hidden></div><h2 id="title">Finding the music…</h2><div id="meta" class="meta">Choose a track to begin</div><div class="transport"><button id="shuffle" aria-label="Shuffle" aria-pressed="false" title="Shuffle">⤨</button><button id="previous" aria-label="Previous track" title="Previous track">◀|</button><button id="play" class="play" aria-label="Play">▶</button><button id="next" aria-label="Next track" title="Next track">|▶</button><button id="repeat" aria-label="Repeat: off" title="Repeat: off">↻</button></div><input id="seek" type="range" min="0" max="100" value="0" step="0.1" aria-label="Playback position" disabled><div class="times"><span id="elapsed">0:00</span><span id="duration">0:00</span></div><p id="status" role="status" aria-live="polite"></p><div class="visualizer" aria-hidden="true"><canvas id="visualizer"></canvas></div><button id="lyrics-toggle" class="lyrics-toggle" aria-expanded="false" aria-controls="lyrics-panel" hidden>♫ Lyrics</button><section id="lyrics-panel" class="lyrics-panel" aria-label="Song lyrics" hidden><pre id="lyrics-text"></pre></section><label class="volume">Volume <input id="volume" type="range" min="0" max="1" step="0.01" value="1"></label></section><section class="card"><div class="list-head"><h2>Track listing</h2><span id="count"></span></div><div id="tracks"></div></section></div><footer>Original soundtrack · Listen and enjoy</footer></main><audio id="audio" preload="metadata" controlslist="nodownload" oncontextmenu="return false"></audio>
 <script>
 'use strict';
 // Keep index.html in the root and songs/artwork in used-songs/.
@@ -25,6 +30,76 @@ const repo=CONFIG.repo||(owner?(parts.length&&parts[0]!=='index.html'?decodeURIC
 const songURL=file=>new URL(encodeURIComponent(file),new URL('./used-songs/',location.href)).href;
 let tracks=[],current=-1,order=[],position=0,shuffled=false,repeat=0,request=0;
 let lyricsController=null,lyricsRequest=0;
+// The canvas is decorative: audio continues normally if visualization is unavailable.
+const visualCanvas=$('visualizer'),visualCtx=visualCanvas.getContext('2d');
+let audioContext=null,analyser=null,frequencyData=null,visualFrame=0,visualActive=false;
+const reducedMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function setupVisualizer(){
+  if(audioContext||!visualCtx)return;
+  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+  if(!AudioContextClass)return;
+  try{
+    audioContext=new AudioContextClass();
+    analyser=audioContext.createAnalyser();analyser.fftSize=1024;analyser.smoothingTimeConstant=.84;
+    frequencyData=new Uint8Array(analyser.frequencyBinCount);
+    const source=audioContext.createMediaElementSource(audio);
+    source.connect(analyser);analyser.connect(audioContext.destination);
+  }catch(_){analyser=null;frequencyData=null}
+}
+function resizeVisualizer(){
+  if(!visualCtx)return;
+  const rect=visualCanvas.getBoundingClientRect(),scale=Math.min(window.devicePixelRatio||1,2);
+  const width=Math.round(rect.width*scale),height=Math.round(rect.height*scale);
+  if(width&&height&&(visualCanvas.width!==width||visualCanvas.height!==height)){
+    visualCanvas.width=width;visualCanvas.height=height;
+  }
+}
+function paintVisualizer(){
+  if(!visualCtx)return;
+  resizeVisualizer();
+  const w=visualCanvas.width,h=visualCanvas.height;
+  if(!w||!h)return;
+  visualCtx.clearRect(0,0,w,h);
+  const playing=visualActive&&!audio.paused&&!audio.ended&&analyser&&!reducedMotion;
+  if(playing)analyser.getByteFrequencyData(frequencyData);
+  const bands=54,values=[];
+  for(let i=0;i<bands;i++){
+    if(!playing){values.push(.045);continue}
+    // More detail in low and middle frequencies, where musical motion is most apparent.
+    const start=Math.floor(Math.pow(i/bands,1.65)*(frequencyData.length-1));
+    const end=Math.max(start+1,Math.floor(Math.pow((i+1)/bands,1.65)*frequencyData.length));
+    let sum=0;for(let j=start;j<end;j++)sum+=frequencyData[j];
+    values.push(Math.min(.93,Math.pow(sum/(end-start)/255,1.35)*1.65+.025));
+  }
+  const mid=h*.55,step=w/(bands-1);
+  const draw=(direction,opacity,lineWidth)=>{
+    const gradient=visualCtx.createLinearGradient(0,mid-direction*h*.42,0,mid+direction*h*.42);
+    gradient.addColorStop(0,'rgba(206,224,171,'+opacity+')');
+    gradient.addColorStop(1,'rgba(84,173,155,'+(opacity*.42)+')');
+    visualCtx.strokeStyle=gradient;visualCtx.lineWidth=lineWidth;visualCtx.lineJoin='round';
+    visualCtx.beginPath();
+    values.forEach((v,i)=>{
+      const x=i*step,y=mid-direction*(7+v*h*.37);
+      if(!i)visualCtx.moveTo(x,y);else visualCtx.lineTo(x,y);
+    });
+    visualCtx.stroke();
+  };
+  visualCtx.save();visualCtx.shadowColor='#a8d9b1';visualCtx.shadowBlur=playing?15:6;
+  draw(1,.88,Math.max(1.5,w/360));
+  visualCtx.shadowBlur=0;draw(-1,.28,Math.max(1,w/650));visualCtx.restore();
+  visualCtx.strokeStyle='#c2d9a21c';visualCtx.lineWidth=1;visualCtx.beginPath();
+  visualCtx.moveTo(0,mid);visualCtx.lineTo(w,mid);visualCtx.stroke();
+  if(playing)visualFrame=requestAnimationFrame(paintVisualizer);
+}
+function stopVisualizer(){
+  visualActive=false;cancelAnimationFrame(visualFrame);paintVisualizer();
+}
+function startVisualizer(){
+  if(!visualCtx)return;
+  visualActive=true;cancelAnimationFrame(visualFrame);paintVisualizer();
+}
+window.addEventListener('resize',()=>{if(!visualActive||reducedMotion)paintVisualizer()});
+
 function closeLyrics(){
   ++lyricsRequest;if(lyricsController)lyricsController.abort();lyricsController=null;
   $('lyrics-toggle').hidden=true;$('lyrics-toggle').setAttribute('aria-expanded','false');
@@ -180,7 +255,7 @@ async function loadArtwork(track,url){
 }
 function select(i){
   closeLyrics();
-  request++;current=i;audio.pause();
+  request++;current=i;audio.pause();stopVisualizer();
   $('lyrics-toggle').hidden=!tracks[i].lyrics;
   const url=songURL(tracks[i].file);audio.src=url;audio.load();syncPlayButton();
   loadArtwork(tracks[i],url);
@@ -191,6 +266,8 @@ function select(i){
 }
 async function play(){
   const token=++request;
+  setupVisualizer();
+  if(audioContext&&audioContext.state==='suspended')audioContext.resume().catch(()=>{});
   try{await audio.play();if(token===request){$('status').textContent='';syncPlayButton()}}
   catch(e){if(token===request&&e.name!=='AbortError')$('status').textContent='Playback could not start. Press play again, or try another track.'}
 }
@@ -210,9 +287,10 @@ $('previous').onclick=()=>advance(-1);
 $('next').onclick=()=>advance(1);
 $('shuffle').onclick=()=>{shuffled=!shuffled;$('shuffle').classList.toggle('on',shuffled);$('shuffle').setAttribute('aria-pressed',String(shuffled));rebuild()};
 $('repeat').onclick=()=>{repeat=(repeat+1)%3;const label=['off','playlist','one track'][repeat];$('repeat').classList.toggle('on',!!repeat);$('repeat').textContent=repeat===2?'↻ 1':'↻';$('repeat').title='Repeat: '+label;$('repeat').setAttribute('aria-label','Repeat: '+label);$('status').textContent='Repeat: '+label};
-audio.onplay=audio.onpause=audio.onemptied=syncPlayButton;
-audio.onended=()=>{syncPlayButton();advance(1,true)};
-audio.onerror=()=>{syncPlayButton();$('status').textContent='This track could not be loaded. Check the filename and audio format, or choose another track.'};
+audio.onplay=()=>{syncPlayButton();startVisualizer()};
+audio.onpause=audio.onemptied=()=>{syncPlayButton();stopVisualizer()};
+audio.onended=()=>{syncPlayButton();stopVisualizer();advance(1,true)};
+audio.onerror=()=>{syncPlayButton();stopVisualizer();$('status').textContent='This track could not be loaded. Check the filename and audio format, or choose another track.'};
 audio.onloadedmetadata=audio.ondurationchange=()=>{$('duration').textContent=time(audio.duration);$('seek').disabled=!(Number.isFinite(audio.duration)&&audio.duration>0)};
 audio.ontimeupdate=()=>{$('elapsed').textContent=time(Number.isFinite(audio.duration)&&audio.duration>0?Math.min(audio.currentTime,audio.duration):audio.currentTime);$('seek').value=Number.isFinite(audio.duration)&&audio.duration>0?Math.min(100,audio.currentTime/audio.duration*100):0};
 $('seek').oninput=()=>{if(Number.isFinite(audio.duration)&&audio.duration>0)audio.currentTime=Number($('seek').value)/100*audio.duration};
@@ -239,6 +317,7 @@ async function init(){
   }catch(e){tracks=[];order=[];current=-1;$('title').textContent='The music is on its way';$('status').textContent=e.name==='AbortError'?'The song list took too long to load. Please reload and try again.':e.message}
   finally{clearTimeout(timeout);controls.forEach(id=>$(id).disabled=!tracks.length)}
 }
+paintVisualizer();
 init();
 </script></body></html>
 
