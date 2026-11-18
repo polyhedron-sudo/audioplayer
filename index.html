@@ -11,10 +11,6 @@
 .lyrics-panel:after{content:"";display:block;width:44px;height:1px;margin:17px auto 0;background:linear-gradient(90deg,transparent,#d0d5aa87,transparent)}
 .lyrics-panel pre{font:normal clamp(16px,2vw,18px)/1.9 Georgia,"Times New Roman",serif;text-align:center;letter-spacing:.012em;white-space:pre-wrap;overflow-wrap:anywhere;max-height:340px;overflow:auto;margin:0;color:#f0eddd;text-shadow:0 1px 10px #00000040;scrollbar-color:#798e77 transparent}
 @media(max-width:680px){.lyrics-panel{padding:24px 13px 17px}.lyrics-panel pre{font-size:16px;line-height:1.8;max-height:300px}}
-/* A quiet, audio-responsive landscape beneath the player. */
-.visualizer{position:relative;height:158px;margin:18px 0 12px;border:1px solid #c2d9a229;border-radius:17px;overflow:hidden;background:radial-gradient(ellipse at 50% 120%,#43675742,transparent 72%),linear-gradient(160deg,#182b2c,#101b22 62%,#192829);box-shadow:inset 0 1px #ffffff0b}
-.visualizer:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#ffffff05,transparent 34%,#00000016)}
-.visualizer canvas{display:block;width:100%;height:100%}
 /* Compact masthead: put listening and artwork ahead of page chrome. */
 main{padding-top:26px}
 header small{font-size:10px;letter-spacing:.16em}
@@ -36,12 +32,11 @@ header p{font-size:13px;line-height:1.35;margin:0;color:var(--muted)}
   .layout>.card:last-child .song strong{max-width:20ch;white-space:normal;overflow-wrap:anywhere;line-height:1.4}
   .card[aria-label="Music player"]{display:grid;grid-template-columns:minmax(0,1fr);align-items:start;align-content:start}
   .card[aria-label="Music player"]>.art{grid-column:1;grid-row:1;width:min(100%,460px);max-width:460px;max-height:none;justify-self:center;margin:0 auto 18px}
-  .card[aria-label="Music player"]>.visualizer{grid-column:1;grid-row:2;align-self:start;width:100%;aspect-ratio:auto;height:140px;min-height:0;margin:0 0 14px}
-  .card[aria-label="Music player"]>:not(.art):not(.visualizer){grid-column:1/-1}
-  .card[aria-label="Music player"]>h2{grid-row:3;margin-top:6px}
-  .card[aria-label="Music player"]>#meta{grid-row:4}
-  .card[aria-label="Music player"]>#lyrics-toggle{grid-row:5;justify-self:center;margin:8px 0}
-  .card[aria-label="Music player"]>#lyrics-panel{grid-row:6;margin-top:6px}
+  .card[aria-label="Music player"]>:not(.art){grid-column:1/-1}
+  .card[aria-label="Music player"]>h2{grid-row:2;margin-top:6px}
+  .card[aria-label="Music player"]>#meta{grid-row:3}
+  .card[aria-label="Music player"]>#lyrics-toggle{grid-row:4;justify-self:center;margin:8px 0}
+  .card[aria-label="Music player"]>#lyrics-panel{grid-row:5;margin-top:6px}
   .card[aria-label="Music player"]>#lyrics-panel pre{max-height:230px}
   #desktop-controls{border-bottom:1px solid #ffffff18;margin-bottom:18px;padding-bottom:13px}
   #desktop-controls:empty{display:none}
@@ -60,8 +55,7 @@ header p{font-size:13px;line-height:1.35;margin:0;color:var(--muted)}
   .layout>.card:first-child{padding-bottom:14px}
   .card[aria-label="Music player"]{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:12px;row-gap:0;align-items:start}
   .card[aria-label="Music player"]>.art{grid-column:1;grid-row:1;width:100%;max-width:none;max-height:none}
-  .card[aria-label="Music player"]>.visualizer{grid-column:2;grid-row:1;align-self:stretch;height:auto;min-height:0;margin:0;border-radius:15px}
-  .card[aria-label="Music player"]>:not(.art):not(.visualizer){grid-column:1/-1}
+  .card[aria-label="Music player"]>:not(.art){grid-column:1/-1}
   .card[aria-label="Music player"]>h2{grid-row:2;margin-top:18px}
   .card[aria-label="Music player"]>#meta{grid-row:3}
   .card[aria-label="Music player"]>#seek{grid-row:4}
@@ -76,7 +70,7 @@ header p{font-size:13px;line-height:1.35;margin:0;color:var(--muted)}
   .transport button{grid-row:2;min-width:0;padding:10px 4px}
   .transport .play{min-width:0}
 }
-</style></head><body><main><header><small>AN ORIGINAL LYRICAL COLLECTION</small><h1>BAF Soundtrack</h1><p>Click Shuffle, Repeat, Play and stay awhile.</p></header><div class="layout"><section class="card" aria-label="Music player"><div class="art"><img id="cover" alt="" hidden></div><h2 id="title">Finding the music…</h2><div id="meta" class="meta">Choose a track to begin</div><div id="transport" class="transport"><button id="shuffle" aria-label="Shuffle" aria-pressed="false" title="Shuffle">⤨</button><button id="previous" aria-label="Previous track" title="Previous track">◀|</button><button id="play" class="play" aria-label="Play">▶</button><button id="next" aria-label="Next track" title="Next track">|▶</button><button id="repeat" aria-label="Repeat: off" title="Repeat: off">↻</button></div><input id="seek" type="range" min="0" max="100" value="0" step="0.1" aria-label="Playback position" disabled><div id="play-times" class="times"><span id="elapsed">0:00</span><span id="duration">0:00</span></div><p id="status" role="status" aria-live="polite"></p><div class="visualizer" aria-hidden="true"><canvas id="visualizer"></canvas></div><button id="lyrics-toggle" class="lyrics-toggle" aria-expanded="false" aria-controls="lyrics-panel" hidden>♫ Lyrics</button><section id="lyrics-panel" class="lyrics-panel" aria-label="Song lyrics" hidden><pre id="lyrics-text"></pre></section><label id="volume-group" class="volume">Volume <input id="volume" type="range" min="0" max="1" step="0.01" value="1"></label></section><section class="card"><div id="desktop-controls" aria-label="Playback controls"></div><div class="list-head"><h2>Track listing</h2><span id="count"></span></div><div id="tracks"></div></section></div><footer>Original soundtrack · Listen and enjoy</footer></main><audio id="audio" preload="metadata" controlslist="nodownload" oncontextmenu="return false"></audio>
+</style></head><body><main><header><small>AN ORIGINAL LYRICAL COLLECTION</small><h1>BAF Soundtrack</h1><p>Click Shuffle, Repeat, Play and stay awhile.</p></header><div class="layout"><section class="card" aria-label="Music player"><div class="art"><img id="cover" alt="" hidden></div><h2 id="title">Finding the music…</h2><div id="meta" class="meta">Choose a track to begin</div><div id="transport" class="transport"><button id="shuffle" aria-label="Shuffle" aria-pressed="false" title="Shuffle">⤨</button><button id="previous" aria-label="Previous track" title="Previous track">◀|</button><button id="play" class="play" aria-label="Play">▶</button><button id="next" aria-label="Next track" title="Next track">|▶</button><button id="repeat" aria-label="Repeat: off" title="Repeat: off">↻</button></div><input id="seek" type="range" min="0" max="100" value="0" step="0.1" aria-label="Playback position" disabled><div id="play-times" class="times"><span id="elapsed">0:00</span><span id="duration">0:00</span></div><p id="status" role="status" aria-live="polite"></p><button id="lyrics-toggle" class="lyrics-toggle" aria-expanded="false" aria-controls="lyrics-panel" hidden>♫ Lyrics</button><section id="lyrics-panel" class="lyrics-panel" aria-label="Song lyrics" hidden><pre id="lyrics-text"></pre></section><label id="volume-group" class="volume">Volume <input id="volume" type="range" min="0" max="1" step="0.01" value="1"></label></section><section class="card"><div id="desktop-controls" aria-label="Playback controls"></div><div class="list-head"><h2>Track listing</h2><span id="count"></span></div><div id="tracks"></div></section></div><footer>Original soundtrack · Listen and enjoy</footer></main><audio id="audio" preload="metadata" controlslist="nodownload" oncontextmenu="return false"></audio>
 <script>
 'use strict';
 // Keep index.html in the root and songs/artwork in used-songs/.
@@ -90,101 +84,6 @@ const repo=CONFIG.repo||(owner?(parts.length&&parts[0]!=='index.html'?decodeURIC
 const songURL=file=>new URL(encodeURIComponent(file),new URL('./used-songs/',location.href)).href;
 let tracks=[],current=-1,order=[],position=0,shuffled=false,repeat=0,request=0;
 let lyricsController=null,lyricsRequest=0;
-// The canvas is decorative: audio continues normally if visualization is unavailable.
-const visualCanvas=$('visualizer'),visualCtx=visualCanvas.getContext('2d');
-let audioContext=null,analyser=null,volumeGain=null,frequencyData=null,visualFrame=0,visualActive=false;
-const reducedMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-function setupVisualizer(){
-  if(audioContext||!visualCtx)return;
-  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
-  if(!AudioContextClass)return;
-  try{
-    audioContext=new AudioContextClass();
-    analyser=audioContext.createAnalyser();analyser.fftSize=4096;analyser.smoothingTimeConstant=.76;
-    frequencyData=new Uint8Array(analyser.frequencyBinCount);
-    const source=audioContext.createMediaElementSource(audio);
-    volumeGain=audioContext.createGain();
-    volumeGain.gain.value=Number($('volume').value);
-    source.connect(analyser);analyser.connect(volumeGain);volumeGain.connect(audioContext.destination);
-  }catch(_){analyser=null;frequencyData=null;volumeGain=null}
-}
-function resizeVisualizer(){
-  if(!visualCtx)return;
-  const rect=visualCanvas.getBoundingClientRect(),scale=Math.min(window.devicePixelRatio||1,2);
-  const width=Math.round(rect.width*scale),height=Math.round(rect.height*scale);
-  if(width&&height&&(visualCanvas.width!==width||visualCanvas.height!==height)){
-    visualCanvas.width=width;visualCanvas.height=height;
-  }
-}
-// One instantaneous FFT frame; each lane plots its own frequency spectrum.
-// Preserve the original glowing, mirrored ribbon style without time histories.
-function paintVisualizer(){
-  if(!visualCtx)return;
-  resizeVisualizer();
-  const w=visualCanvas.width,h=visualCanvas.height;
-  if(!w||!h)return;
-  visualCtx.clearRect(0,0,w,h);
-  const playing=visualActive&&!audio.paused&&!audio.ended&&analyser&&!reducedMotion;
-  if(playing)analyser.getByteFrequencyData(frequencyData);
-  const sampleRate=audioContext?audioContext.sampleRate:44100;
-  const binHz=sampleRate/(analyser?analyser.fftSize:4096);
-  const lanes=[
-    {low:35,high:250,center:.18,gain:1.35,color:[209,225,163],glow:'#cde1aa'},
-    {low:250,high:2500,center:.5,gain:1.55,color:[111,200,161],glow:'#8dd9ae'},
-    {low:2500,high:10000,center:.82,gain:1.9,color:[125,194,204],glow:'#8bc8d0'}
-  ];
-  const bands=52,scale=Math.min(window.devicePixelRatio||1,2);
-  for(const lane of lanes){
-    const mid=h*lane.center;
-    const amplitude=h*.13;
-    const values=[];
-    for(let i=0;i<bands;i++){
-      if(!playing){values.push(.035);continue;}
-      // Logarithmic spacing preserves detail in bass, mids and treble alike.
-      const f0=lane.low*Math.pow(lane.high/lane.low,i/bands);
-      const f1=lane.low*Math.pow(lane.high/lane.low,(i+1)/bands);
-      const a=Math.min(frequencyData.length-1,Math.max(0,Math.floor(f0/binHz)));
-      const b=Math.min(frequencyData.length,Math.max(a+1,Math.ceil(f1/binHz)));
-      let sum=0,peak=0;
-      for(let j=a;j<b;j++){
-        const v=frequencyData[j]/255;
-        sum+=v;peak=Math.max(peak,v);
-      }
-      const energy=.75*(sum/(b-a))+.25*peak;
-      values.push(Math.min(.94,Math.pow(energy,1.2)*lane.gain+.025));
-    }
-    const step=w/(bands-1);
-    const trace=(direction,opacity,width,blur)=>{
-      visualCtx.save();
-      const [r,g,b]=lane.color;
-      visualCtx.strokeStyle='rgba('+r+','+g+','+b+','+opacity+')';
-      visualCtx.lineWidth=width*scale;
-      visualCtx.lineCap='round';visualCtx.lineJoin='round';
-      visualCtx.shadowColor=lane.glow;visualCtx.shadowBlur=playing?blur*scale:0;
-      visualCtx.beginPath();
-      values.forEach((value,i)=>{
-        const x=i*step,y=mid-direction*(2*scale+value*amplitude);
-        if(i===0)visualCtx.moveTo(x,y);else visualCtx.lineTo(x,y);
-      });
-      visualCtx.stroke();visualCtx.restore();
-    };
-    visualCtx.strokeStyle='rgba(194,217,162,.09)';
-    visualCtx.lineWidth=scale;
-    visualCtx.beginPath();visualCtx.moveTo(0,mid);visualCtx.lineTo(w,mid);visualCtx.stroke();
-    trace(1,.9,1.8,7);
-    trace(-1,.34,1.1,0);
-  }
-  if(playing)visualFrame=requestAnimationFrame(paintVisualizer);
-}
-function stopVisualizer(){
-  visualActive=false;cancelAnimationFrame(visualFrame);paintVisualizer();
-}
-function startVisualizer(){
-  if(!visualCtx)return;
-  visualActive=true;cancelAnimationFrame(visualFrame);paintVisualizer();
-}
-window.addEventListener('resize',()=>{if(!visualActive||reducedMotion)paintVisualizer()});
-
 function closeLyrics(){
   ++lyricsRequest;if(lyricsController)lyricsController.abort();lyricsController=null;
   $('lyrics-toggle').hidden=true;$('lyrics-toggle').setAttribute('aria-expanded','false');
@@ -340,7 +239,7 @@ async function loadArtwork(track,url){
 }
 function select(i){
   closeLyrics();
-  request++;current=i;audio.pause();stopVisualizer();
+  request++;current=i;audio.pause();
   $('lyrics-toggle').hidden=!tracks[i].lyrics;
   if(tracks[i].lyrics&&desktopMedia.matches) $('lyrics-toggle').click();
   const url=songURL(tracks[i].file);audio.src=url;audio.load();syncPlayButton();
@@ -352,8 +251,6 @@ function select(i){
 }
 async function play(){
   const token=++request;
-  setupVisualizer();
-  if(audioContext&&audioContext.state==='suspended')audioContext.resume().catch(()=>{});
   try{await audio.play();if(token===request){$('status').textContent='';syncPlayButton()}}
   catch(e){if(token===request&&e.name!=='AbortError')$('status').textContent='Playback could not start. Press play again, or try another track.'}
 }
@@ -373,18 +270,13 @@ $('previous').onclick=()=>advance(-1);
 $('next').onclick=()=>advance(1);
 $('shuffle').onclick=()=>{shuffled=!shuffled;$('shuffle').classList.toggle('on',shuffled);$('shuffle').setAttribute('aria-pressed',String(shuffled));rebuild()};
 $('repeat').onclick=()=>{repeat=(repeat+1)%3;const label=['off','playlist','one track'][repeat];$('repeat').classList.toggle('on',!!repeat);$('repeat').textContent=repeat===2?'↻ 1':'↻';$('repeat').title='Repeat: '+label;$('repeat').setAttribute('aria-label','Repeat: '+label);$('status').textContent='Repeat: '+label};
-audio.onplay=()=>{syncPlayButton();startVisualizer()};
-audio.onpause=audio.onemptied=()=>{syncPlayButton();stopVisualizer()};
-audio.onended=()=>{syncPlayButton();stopVisualizer();advance(1,true)};
-audio.onerror=()=>{syncPlayButton();stopVisualizer();$('status').textContent='This track could not be loaded. Check the filename and audio format, or choose another track.'};
+audio.onplay=audio.onpause=audio.onemptied=syncPlayButton;
+audio.onended=()=>{syncPlayButton();advance(1,true)};
+audio.onerror=()=>{syncPlayButton();$('status').textContent='This track could not be loaded. Check the filename and audio format, or choose another track.'};
 audio.onloadedmetadata=audio.ondurationchange=()=>{$('duration').textContent=time(audio.duration);$('seek').disabled=!(Number.isFinite(audio.duration)&&audio.duration>0)};
 audio.ontimeupdate=()=>{$('elapsed').textContent=time(Number.isFinite(audio.duration)&&audio.duration>0?Math.min(audio.currentTime,audio.duration):audio.currentTime);$('seek').value=Number.isFinite(audio.duration)&&audio.duration>0?Math.min(100,audio.currentTime/audio.duration*100):0};
 $('seek').oninput=()=>{if(Number.isFinite(audio.duration)&&audio.duration>0)audio.currentTime=Number($('seek').value)/100*audio.duration};
-$('volume').oninput=()=>{
-  const level=Number($('volume').value);
-  if(volumeGain)volumeGain.gain.value=level;
-  else audio.volume=level;
-};
+$('volume').oninput=()=>audio.volume=Number($('volume').value);
 async function init(){
   const controls=['play','previous','next','shuffle','repeat'];controls.forEach(id=>$(id).disabled=true);
   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),20000);
@@ -426,7 +318,6 @@ function arrangeControls(){
 desktopMedia.addEventListener?.('change',arrangeControls);
 if(!desktopMedia.addEventListener)desktopMedia.addListener(arrangeControls);
 arrangeControls();
-paintVisualizer();
 init();
 </script></body></html>
 
