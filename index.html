@@ -249,9 +249,28 @@ function select(i){
   $('status').textContent='';$('seek').value=0;$('seek').disabled=true;
   $('elapsed').textContent='0:00';$('duration').textContent='0:00';render();
 }
+let audioContext=null,mediaSource=null,volumeGain=null;
+function ensureVolumeGraph(){
+  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+  if(!AudioContextClass)return false;
+  if(!audioContext){
+    audioContext=new AudioContextClass();
+    mediaSource=audioContext.createMediaElementSource(audio);
+    volumeGain=audioContext.createGain();
+    mediaSource.connect(volumeGain);
+    volumeGain.connect(audioContext.destination);
+    volumeGain.gain.value=Number($('volume').value);
+    audio.volume=1;
+  }
+  return true;
+}
 async function play(){
   const token=++request;
-  try{await audio.play();if(token===request){$('status').textContent='';syncPlayButton()}}
+  try{
+    if(ensureVolumeGraph()&&audioContext.state!=='running')await audioContext.resume();
+    await audio.play();
+    if(token===request){$('status').textContent='';syncPlayButton()}
+  }
   catch(e){if(token===request&&e.name!=='AbortError')$('status').textContent='Playback could not start. Press play again, or try another track.'}
 }
 function advance(delta,automatic=false,startPlayback=true){
@@ -276,7 +295,7 @@ audio.onerror=()=>{syncPlayButton();$('status').textContent='This track could no
 audio.onloadedmetadata=audio.ondurationchange=()=>{$('duration').textContent=time(audio.duration);$('seek').disabled=!(Number.isFinite(audio.duration)&&audio.duration>0)};
 audio.ontimeupdate=()=>{$('elapsed').textContent=time(Number.isFinite(audio.duration)&&audio.duration>0?Math.min(audio.currentTime,audio.duration):audio.currentTime);$('seek').value=Number.isFinite(audio.duration)&&audio.duration>0?Math.min(100,audio.currentTime/audio.duration*100):0};
 $('seek').oninput=()=>{if(Number.isFinite(audio.duration)&&audio.duration>0)audio.currentTime=Number($('seek').value)/100*audio.duration};
-$('volume').oninput=()=>audio.volume=Number($('volume').value);
+$('volume').oninput=()=>{const value=Number($('volume').value);if(volumeGain)volumeGain.gain.value=value;else audio.volume=value};
 async function init(){
   const controls=['play','previous','next','shuffle','repeat'];controls.forEach(id=>$(id).disabled=true);
   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),20000);
