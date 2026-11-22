@@ -78,21 +78,6 @@ header p{font-size:13px;line-height:1.35;margin:0;color:var(--muted)}
 // No tokens or secrets belong in this configuration.
 const CONFIG={owner:'',repo:'',branch:'',tracks:[]};
 const $=id=>document.getElementById(id),audio=$('audio');
-let audioContext=null,audioGain=null;
-function setupVolumeControl(){
-  if(!audioContext){
-    const AudioContextClass=window.AudioContext||window.webkitAudioContext;
-    if(!AudioContextClass)return;
-    audioContext=new AudioContextClass();
-    const source=audioContext.createMediaElementSource(audio);
-    audioGain=audioContext.createGain();
-    source.connect(audioGain);
-    audioGain.connect(audioContext.destination);
-    audio.volume=1;
-  }
-  audioGain.gain.value=Number($('volume').value);
-  if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});
-}
 const parts=location.pathname.split('/').filter(Boolean);
 const owner=CONFIG.owner||(location.hostname.endsWith('.github.io')?location.hostname.split('.')[0]:'');
 const repo=CONFIG.repo||(owner?(parts.length&&parts[0]!=='index.html'?decodeURIComponent(parts[0]):owner+'.github.io'):'');
@@ -266,10 +251,10 @@ function select(i){
 }
 async function play(){
   const token=++request;
-  try{setupVolumeControl();await audio.play();if(token===request){$('status').textContent='';syncPlayButton()}}
+  try{await audio.play();if(token===request){$('status').textContent='';syncPlayButton()}}
   catch(e){if(token===request&&e.name!=='AbortError')$('status').textContent='Playback could not start. Press play again, or try another track.'}
 }
-$('volume').oninput=setupVolumeControl;
+$('volume').oninput=()=>audio.volume=Number($('volume').value);
 function advance(delta,automatic=false,startPlayback=true){
   if(!tracks.length)return;
   if(automatic&&repeat===2){audio.currentTime=0;play();return}
